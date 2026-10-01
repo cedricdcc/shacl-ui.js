@@ -31,8 +31,13 @@ describe('VocabServer Reference Widget', () => {
       expect(config.searchEndpoint).toBe('https://vocab.vliz.be');
       expect(config.sourceVocabularies).toBe('https://my-application.com/vocabulary-alias/vliz-dams-crs');
       expect(config.sourceDatasets).toBeNull();
-      expect(config.languagesString).toBe('*');
+      expect(config.languagesString).toBeNull();
       expect(config.singleSelect).toBe(false);
+    });
+
+    it('treats wildcard languages as null (no filter)', () => {
+      const config = parseVocabServerConfig({ languages: '*' });
+      expect(config.languagesString).toBeNull();
     });
 
     it('extracts custom annotations and honors maxCount=1', () => {

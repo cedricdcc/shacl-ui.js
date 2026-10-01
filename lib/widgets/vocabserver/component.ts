@@ -1,4 +1,4 @@
-import { html, type TemplateResult } from 'lit';
+import { html, nothing, type TemplateResult } from 'lit';
 import { DataFactory } from 'rdf-data-factory';
 import type { CustomWidgetDefinition, CustomWidgetRenderContext, UIComponent } from '../../types.ts';
 
@@ -12,7 +12,7 @@ export interface VocabServerConfig {
   searchEndpoint: string;
   sourceVocabularies: string | null;
   sourceDatasets: string | null;
-  languagesString: string;
+  languagesString: string | null;
   singleSelect: boolean;
 }
 
@@ -77,7 +77,10 @@ export function parseVocabServerConfig(
     'source-datasets'
   ) || null;
 
-  const languagesString = getAnnotation('languages', 'languages-string') || '*';
+  const rawLanguages = getAnnotation('languages', 'languages-string');
+  const languagesString = rawLanguages && rawLanguages.trim() !== '*' && rawLanguages.trim().length > 0
+    ? rawLanguages.trim()
+    : null;
   const singleSelect = propertyShape?.maxCount === 1;
 
   return {
@@ -132,10 +135,10 @@ export const VocabServerWidgetDefinition: CustomWidgetDefinition = {
         <vocab-search-bar
           search-endpoint="${config.searchEndpoint}"
           source-vocabularies="${config.sourceVocabularies ?? ''}"
-          source-datasets="${config.sourceDatasets ?? ''}"
-          languages-string="${config.languagesString}"
-          single-select="${config.singleSelect ? 'true' : 'false'}"
-          selections="${currentVal}"
+          source-datasets="${config.sourceDatasets ?? nothing}"
+          languages-string="${config.languagesString ?? nothing}"
+          ?single-select="${config.singleSelect}"
+          selections="${currentVal || nothing}"
           @selection-changed="${(e: CustomEvent) => {
             const detail = e.detail;
             if (Array.isArray(detail) && detail.length > 0 && detail[0]?.uri) {
