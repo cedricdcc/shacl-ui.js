@@ -1,9 +1,20 @@
 // Root dispatch for the widget layer: render slots -> components -> the per-widget switch.
 import {html, nothing, type TemplateResult} from "lit";
 import {twMerge} from "tailwind-merge";
-import {type RootRenderSlot, type TailwindClasses, type UIComponent, type UIComponentValue} from "../../types.ts";
+import type {Term} from "@rdfjs/types";
+import {
+   type CustomWidgetDefinition,
+   type CustomWidgetInstance,
+   type CustomWidgetMountContext,
+   type CustomWidgetRenderContext,
+   type RootRenderSlot,
+   type TailwindClasses,
+   type UIComponent,
+   type UIComponentValue
+} from "../../types.ts";
 import {shui} from "../../core/namespaces.ts";
 import {ShaclRenderer} from "../../shacl-renderer.ts";
+import {getCustomWidget, hasCustomWidget} from "./registry.ts";
 import {
    renderDescription,
    renderLabel,
@@ -39,6 +50,80 @@ import {
 } from "./viewers-literal.ts";
 import {renderBlankNodeViewer, renderImageViewer, renderIRIViewer, renderLabelViewer} from "./viewers-node.ts";
 import {renderDetailsViewer, renderValueTableViewer} from "./viewers-nested.ts";
+
+/**
+ * Extracts custom shape annotations (predicates and object values) from a shapesStore
+ * for a given shape node. Keys include full IRI and local name/prefixed suffixes.
+ */
+export function extractShapeAnnotations(shapeNode: any, shapesStore: any): Record<string, string> {
+   const annotations: Record<string, string> = {};
+   if (!shapeNode || !shapesStore || typeof shapesStore.getQuads !== "function") {
+      return annotations;
+   }
+   const quads = shapesStore.getQuads(shapeNode, null, null, null);
+   for (const q of quads) {
+      const pred = q.predicate.value;
+      const val = q.object.value;
+      annotations[pred] = val;
+      const localName = pred.split("#").pop()?.split("/").pop();
+      if (localName && !annotations[localName]) {
+         annotations[localName] = val;
+      }
+   }
+   return annotations;
+}
+
+class ShaclCustomWidgetHost extends HTMLElement {
+   private _def?: CustomWidgetDefinition;
+   private _context?: CustomWidgetRenderContext;
+   private _instance?: CustomWidgetInstance;
+
+   set widgetDef(val: CustomWidgetDefinition | undefined) {
+      this._def = val;
+      this._sync();
+   }
+   get widgetDef() { return this._def; }
+
+   set context(val: CustomWidgetRenderContext | undefined) {
+      this._context = val;
+      this._sync();
+   }
+   get context() { return this._context; }
+
+   connectedCallback() {
+      this._sync();
+   }
+
+   disconnectedCallback() {
+      if (this._instance?.unmount) {
+         try { this._instance.unmount(); } catch (e) { console.error(e); }
+      }
+      this._instance = undefined;
+   }
+
+   private _sync() {
+      if (!this.isConnected || !this._def?.mount || !this._context) return;
+      if (!this._instance) {
+         this._instance = this._def.mount({
+            ...this._context,
+            container: this
+         });
+      } else if (this._instance.update) {
+         this._instance.update({
+            ...this._context,
+            container: this
+         });
+      }
+   }
+}
+
+if (typeof customElements !== "undefined" && !customElements.get("shacl-custom-widget-host")) {
+   customElements.define("shacl-custom-widget-host", ShaclCustomWidgetHost);
+}
+
+function renderCustomWidgetMount(def: CustomWidgetDefinition, context: CustomWidgetRenderContext): TemplateResult {
+   return html`<shacl-custom-widget-host .widgetDef=${def} .context=${context}></shacl-custom-widget-host>`;
+}
 
 /**
  * Renders the interleaved list of base `sh:property` components and root-level
@@ -254,6 +339,42 @@ export function renderUIComponent(renderer: ShaclRenderer, uiComponent: UICompon
 }
 
 export function renderEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
+   if (value.selectedWidget && hasCustomWidget(value.selectedWidget)) {
+      const customWidget = getCustomWidget(value.selectedWidget)!;
+      const shapeNode = (uiComponent as any).propertyShape || uiComponent.node || uiComponent.iri;
+      const annotations = extractShapeAnnotations(shapeNode, renderer.shapesStore);
+
+      const onValueChange = (newTerm: Term | null) => {
+         const prevTerm = value.value;
+         if (prevTerm && renderer.removeFromDataStore) {
+            renderer.removeFromDataStore(uiComponent.focusNode, value.path, prevTerm);
+         }
+         if (newTerm && renderer.addToDataStore) {
+            renderer.addToDataStore(uiComponent.focusNode, value.path, newTerm);
+         }
+         value.value = newTerm ?? ({} as any);
+         renderer.rerender();
+      };
+
+      const context: CustomWidgetRenderContext = {
+         renderer,
+         uiComponent,
+         value,
+         index,
+         classes,
+         disabled,
+         mode: renderer.mode || 'edit',
+         annotations,
+         onValueChange
+      };
+
+      if (customWidget.render) {
+         return customWidget.render(context);
+      } else if (customWidget.mount) {
+         return renderCustomWidgetMount(customWidget, context);
+      }
+   }
+
    switch (value.selectedWidget) {
       case shui("AutoCompleteEditor"):
          return renderAutoCompleteEditor(renderer, uiComponent, value, index, classes, disabled);
@@ -348,6 +469,30 @@ function renderUIComponentViewMode(renderer: ShaclRenderer, uiComponent: UICompo
 
 /** Per-value dispatch for view mode: routes value.selectedWidget (a viewer IRI) to its render fn. */
 export function renderViewer(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses) {
+   if (value.selectedWidget && hasCustomWidget(value.selectedWidget)) {
+      const customWidget = getCustomWidget(value.selectedWidget)!;
+      const shapeNode = (uiComponent as any).propertyShape || uiComponent.node || uiComponent.iri;
+      const annotations = extractShapeAnnotations(shapeNode, renderer.shapesStore);
+
+      const context: CustomWidgetRenderContext = {
+         renderer,
+         uiComponent,
+         value,
+         index,
+         classes,
+         disabled: true,
+         mode: 'view',
+         annotations,
+         onValueChange: () => {}
+      };
+
+      if (customWidget.render) {
+         return customWidget.render(context);
+      } else if (customWidget.mount) {
+         return renderCustomWidgetMount(customWidget, context);
+      }
+   }
+
    switch (value.selectedWidget) {
       case shui("BlankNodeViewer"):
          return renderBlankNodeViewer(renderer, uiComponent, value, index, classes);
