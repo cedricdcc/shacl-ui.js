@@ -32,7 +32,7 @@ export const STYLING_SLOTS = {
    enumSelectEditorClass: '',
    enumSelectEditorIconClass: 'h-4 w-4 text-zinc-500 dark:text-zinc-400',
    iriEditorClass: '',
-   detailsEditorClass: 'ml-4 border-l dark:border-zinc-200 pl-4 relative',
+   detailsEditorClass: 'details-editor-card rounded-xl border border-zinc-200 dark:border-zinc-700/80 bg-zinc-50/70 dark:bg-zinc-800/40 p-4 mb-3 border-l-4 border-l-blue-500 dark:border-l-blue-400 shadow-xs relative transition-all [&_.details-editor-card]:bg-white dark:[&_.details-editor-card]:bg-zinc-900/60 [&_.details-editor-card]:border-l-teal-500 dark:[&_.details-editor-card]:border-l-teal-400 [&_.details-editor-card_.details-editor-card]:bg-zinc-50/90 dark:[&_.details-editor-card_.details-editor-card]:bg-zinc-800/90 [&_.details-editor-card_.details-editor-card]:border-l-amber-500 dark:[&_.details-editor-card_.details-editor-card]:border-l-amber-400',
    plusIconClass: 'size-6 float-right text-green-600 dark:text-green-400 cursor-pointer hover:text-green-700 dark:hover:text-green-500',
    xIconClass: 'size-5 -mr-1 mt-4 cursor-pointer text-zinc-900 dark:text-zinc-50',
    groupClass: 'md:flex md:gap-x-4 md:flex-wrap',

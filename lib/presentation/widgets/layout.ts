@@ -247,9 +247,25 @@ export function renderUIComponents(renderer: ShaclRenderer, uiComponents: UIComp
            const group = components[0].group;
 
            if (!group) {
-               return components.map(c =>
-                       renderUIComponent(renderer, c, classes)
-               );
+               return html`
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                       ${components.map(c => {
+                           const isFullWidth = components.length === 1
+                               || c.node != null
+                               || c.orNode != null
+                               || c.defaultWidget === shui('DetailsEditor')
+                               || c.defaultWidget === shui('DetailsViewer')
+                               || c.defaultWidget === shui('TextAreaEditor')
+                               || c.defaultWidget === shui('RichTextEditor')
+                               || c.defaultWidget === shui('ValueTableViewer');
+                           return html`
+                               <div class="${isFullWidth ? 'col-span-full' : 'col-span-1'}">
+                                   ${renderUIComponent(renderer, c, classes)}
+                               </div>
+                           `;
+                       })}
+                   </div>
+               `;
            }
 
            return html`

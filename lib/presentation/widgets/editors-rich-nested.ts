@@ -12,14 +12,39 @@ import {languageOptions} from "./editors-fields.ts";
 
 export function renderDetailsEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
    const childComponents = uiComponent.children ? (uiComponent.children[index] ?? []) : [];
+   const canRemove = (uiComponent.node ? (uiComponent.children?.length ?? 0) : uiComponent.values.length) > (uiComponent.minCount || 0);
+   const isMultiple = (uiComponent.maxCount ?? 2) > 1 || uiComponent.values.length > 1;
+   const showHeader = isMultiple || canRemove;
+   const itemLabel = uiComponent.label
+      ? (isMultiple ? `${uiComponent.label} #${index + 1}` : uiComponent.label)
+      : `Item #${index + 1}`;
+
    return html`
        <div class="${twMerge(classes.detailsEditorClass)}">
-           ${disabled ? nothing : renderXIcon(uiComponent, classes, () => {
-               uiComponent.children!.splice(index, 1);
-               renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value, childComponents);
-               uiComponent.values.splice(index, 1);
-               renderer.rerender();
-           }, false)}
+           ${showHeader ? html`
+               <div class="flex items-center justify-between pb-2 mb-3 border-b border-zinc-200/80 dark:border-zinc-700/60 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                   <span class="inline-flex items-center gap-1.5 font-medium text-zinc-700 dark:text-zinc-300">
+                       <span class="inline-block w-2 h-2 rounded-full bg-blue-500 dark:bg-blue-400"></span>
+                       ${itemLabel}
+                   </span>
+                   ${disabled || !canRemove ? nothing : html`
+                       <button type="button"
+                               title="Remove item"
+                               aria-label="Remove item"
+                               class="inline-flex items-center justify-center p-1 rounded-md text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 dark:hover:text-red-400 transition-colors cursor-pointer"
+                               @click="${() => {
+                                   uiComponent.children!.splice(index, 1);
+                                   renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value, childComponents);
+                                   uiComponent.values.splice(index, 1);
+                                   renderer.rerender();
+                               }}">
+                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="${twMerge(classes.xIconClass, 'size-3.5 mt-0 cursor-pointer')}">
+                               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                           </svg>
+                       </button>
+                   `}
+               </div>
+           ` : nothing}
 
            ${uiComponent.classes && uiComponent.classes.length > 1 ? renderDetailsClassSelect(renderer, uiComponent, value, index, classes) : nothing}
 
