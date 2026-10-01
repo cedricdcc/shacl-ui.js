@@ -1,4 +1,6 @@
 import type {Term} from "@rdfjs/types";
+import type {TemplateResult} from "lit";
+import type {ShaclRenderer} from "./shacl-renderer.ts";
 
 export type UIComponent = {
    uuid: string;
@@ -254,3 +256,36 @@ export type TailwindClasses = {
    collectionItemLabelClass?: string;
    focusNodePickerClass?: string;
 };
+
+// ── Custom Widgets ───────────────────────────────────────────────────────────
+
+export interface CustomWidgetRenderContext {
+   renderer: ShaclRenderer;
+   uiComponent: UIComponent;
+   value: UIComponentValue;
+   index: number;
+   classes: TailwindClasses;
+   disabled: boolean;
+   mode: 'edit' | 'view';
+   annotations: Record<string, string>;
+   onValueChange: (newTerm: Term | null) => void;
+}
+
+export interface CustomWidgetMountContext extends CustomWidgetRenderContext {
+   container: HTMLElement;
+}
+
+export interface CustomWidgetInstance {
+   update?: (context: CustomWidgetMountContext) => void;
+   unmount?: () => void;
+}
+
+export interface CustomWidgetDefinition {
+   iri: string;
+   label?: string;
+   description?: string;
+   defaultScoringTtl?: string;
+   render?: (context: CustomWidgetRenderContext) => TemplateResult;
+   mount?: (context: CustomWidgetMountContext) => CustomWidgetInstance;
+}
+

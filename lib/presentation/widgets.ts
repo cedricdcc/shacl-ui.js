@@ -16,3 +16,12 @@ export {getDefaultTermForWidget, addChildrenToDataStore} from "./widgets/shared.
 export {renderHTMLViewer, renderHyperlinkViewer, renderLangStringViewer, renderLiteralViewer} from "./widgets/viewers-literal.ts";
 export {renderBlankNodeViewer, renderIRIViewer, renderImageViewer, renderLabelViewer} from "./widgets/viewers-node.ts";
 export {renderDetailsViewer, renderValueTableViewer} from "./widgets/viewers-nested.ts";
+export {
+   registerCustomWidget,
+   unregisterCustomWidget,
+   getCustomWidget,
+   hasCustomWidget,
+   getAllCustomWidgets,
+   getCustomScoringTtls,
+   clearCustomWidgets
+} from "./widgets/registry.ts";

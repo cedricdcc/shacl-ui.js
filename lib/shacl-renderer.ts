@@ -880,3 +880,19 @@ declare global {
     'shacl-renderer': ShaclRenderer
   }
 }
+
+export {
+  registerCustomWidget,
+  unregisterCustomWidget,
+  getCustomWidget,
+  hasCustomWidget,
+  getAllCustomWidgets,
+  getCustomScoringTtls,
+  clearCustomWidgets
+} from "./presentation/widgets/registry.ts";
+export type {
+  CustomWidgetDefinition,
+  CustomWidgetRenderContext,
+  CustomWidgetMountContext,
+  CustomWidgetInstance
+} from "./types.ts";
