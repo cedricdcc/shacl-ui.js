@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SHACL UI Interactive Workbench | W3C SHACL 1.2 Form Generator</title>
+    <meta name="description" content="Interactive demo and workbench for W3C SHACL 1.2 UI, automatically rendering dynamic forms from SHACL shapes and generating live RDF Turtle data." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./workbench.css" />
+  </head>
+  <body>
+    <div id="app" class="app-layout">
+      <!-- Top Navigation Bar -->
+      <header class="top-nav">
+        <div class="nav-brand">
+          <div class="brand-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <span class="brand-title">SHACL UI <span class="gradient-text">Workbench</span></span>
+            <span class="spec-badge">W3C SHACL 1.2</span>
+          </div>
+        </div>
+
+        <div class="nav-controls">
+          <!-- Back to Demos -->
+          <a href="index.html" class="btn-ghost-sm" style="text-decoration:none;" title="View classic test pages">
+            &larr; Standard Demos
+          </a>
+
+          <!-- Preset Selector -->
+          <div class="control-group">
+            <label for="preset-select" class="control-label">Template:</label>
+            <div class="select-wrapper">
+              <select id="preset-select" class="nav-select">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+          </div>
+
+          <!-- Target NodeShape Selector -->
+          <div class="control-group">
+            <label for="shape-select" class="control-label">Target Shape:</label>
+            <div class="select-wrapper">
+              <select id="shape-select" class="nav-select">
+                <option value="">Auto-detecting...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Primary Generate Action -->
+          <button id="btn-generate" class="btn btn-primary" title="Generate Form (Ctrl + Enter)">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            <span>Generate Form</span>
+            <kbd class="kbd-shortcut">Ctrl+Enter</kbd>
+          </button>
+
+          <!-- Mode Toggle -->
+          <div class="mode-toggle-group">
+            <button id="btn-mode-edit" class="btn-toggle active" title="Interactive Form Editing">Edit</button>
+            <button id="btn-mode-view" class="btn-toggle" title="Read-Only View Mode">View</button>
+          </div>
+
+          <!-- Theme Toggle -->
+          <button id="btn-theme-toggle" class="btn-icon" title="Toggle Theme" aria-label="Toggle Theme">
+            <svg id="theme-icon-sun" class="icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg id="theme-icon-moon" class="icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- 3-Panel Main Workbench -->
+      <main class="workbench-panels">
+        <!-- Panel 1: SHACL Shape Editor (Left) -->
+        <section class="panel panel-editor" id="panel-editor">
+          <div class="panel-header">
+            <div class="panel-title-area">
+              <span class="panel-step-badge">1</span>
+              <h2 class="panel-title">SHACL Shape Editor</h2>
+              <span class="chip chip-tech">Turtle .ttl</span>
+            </div>
+            <div class="panel-actions">
+              <button id="btn-toggle-config" class="btn-ghost-sm" title="Advanced Node Configuration">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <span>Config</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Collapsible Config Drawer -->
+          <div id="config-drawer" class="config-drawer collapsed">
+            <div class="config-field">
+              <label for="input-focus-node">Focus Node IRI:</label>
+              <input type="text" id="input-focus-node" class="text-input" placeholder="http://example.org/resource/1" value="http://example.org/observation/OBS-2026-01" />
+            </div>
+            <div class="config-field">
+              <label for="input-target-class">Target Class (Optional):</label>
+              <input type="text" id="input-target-class" class="text-input" placeholder="http://example.org/MarineObservation" value="http://example.org/MarineObservation" />
+            </div>
+          </div>
+
+          <!-- CodeMirror Editor Host -->
+          <div class="editor-container" id="shape-editor-host"></div>
+
+          <!-- Shape Parser Status Bar -->
+          <div class="panel-footer" id="editor-status-bar">
+            <span class="status-indicator valid" id="shape-status-dot"></span>
+            <span id="shape-status-text">Shape loaded • Ready</span>
+          </div>
+        </section>
+
+        <!-- Panel 2: Live SHACL Form (Center) -->
+        <section class="panel panel-form" id="panel-form">
+          <div class="panel-header">
+            <div class="panel-title-area">
+              <span class="panel-step-badge">2</span>
+              <h2 class="panel-title">Generated SHACL UI Form</h2>
+              <span class="live-pill">
+                <span class="pulsing-dot"></span> Live
+              </span>
+            </div>
+            <div class="panel-actions">
+              <button id="btn-re-render" class="btn-ghost-sm" title="Re-render Form from Shape">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span>Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Focus Node Information Banner -->
+          <div class="form-focus-banner" id="form-focus-banner">
+            <span class="focus-label">Focus Node:</span>
+            <code class="focus-uri" id="current-focus-node-display">http://example.org/observation/OBS-2026-01</code>
+          </div>
+
+          <!-- Form Viewport -->
+          <div class="form-viewport" id="form-viewport">
+            <div id="renderer-container" class="renderer-container">
+              <!-- <shacl-renderer> is dynamically inserted and managed here -->
+            </div>
+          </div>
+
+          <!-- Interactive Footer Note -->
+          <div class="panel-footer form-footer">
+            <span class="hint-text">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              Editing any field dynamically serializes quads and updates the output panel in real-time.
+            </span>
+          </div>
+        </section>
+
+        <!-- Panel 3: Generated Turtle (.ttl) Output (Right) -->
+        <section class="panel panel-output" id="panel-output">
+          <div class="panel-header">
+            <div class="panel-title-area">
+              <span class="panel-step-badge">3</span>
+              <h2 class="panel-title">Generated Turtle Data</h2>
+              <span class="chip chip-tech">data.ttl</span>
+            </div>
+            <div class="panel-actions">
+              <button id="btn-copy-ttl" class="btn-ghost-sm" title="Copy Turtle Output to Clipboard">
+                <svg id="icon-copy" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span id="copy-btn-text">Copy</span>
+              </button>
+              <button id="btn-download-ttl" class="btn-ghost-sm" title="Download data.ttl file">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Download</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SHACL Conformance Status Banner -->
+          <div class="conformance-banner valid" id="conformance-banner">
+            <div class="conformance-icon" id="conformance-icon">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <polyline points="9 12 11 14 15 10"/>
+              </svg>
+            </div>
+            <div class="conformance-details">
+              <span class="conformance-title" id="conformance-title">SHACL Conformance: Valid</span>
+              <span class="conformance-subtitle" id="conformance-subtitle">Data conforms to input shapes graph</span>
+            </div>
+          </div>
+
+          <!-- Violations Drawer (Hidden when valid) -->
+          <div class="violations-drawer" id="violations-drawer" style="display:none;">
+            <ul id="violations-list" class="violations-list"></ul>
+          </div>
+
+          <!-- CodeMirror Output Viewer Host -->
+          <div class="editor-container" id="output-editor-host"></div>
+
+          <!-- Output Stats Footer -->
+          <div class="panel-footer output-footer">
+            <span id="output-triples-count" class="chip chip-dim">0 triples</span>
+            <span id="output-byte-size" class="chip chip-dim">0 B</span>
+            <span id="output-sync-status" class="sync-indicator">Synchronized</span>
+          </div>
+        </section>
+      </main>
+
+      <!-- Toast Notification Container -->
+      <div id="toast-container" class="toast-container"></div>
+    </div>
+
+    <script type="module" src="./workbench.ts"></script>
+  </body>
+</html>

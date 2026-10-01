@@ -33,6 +33,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         index: resolve(__dirname, "src/index.html"),
+        workbench: resolve(__dirname, "src/workbench.html"),
         cv: resolve(__dirname, "src/cv.html"),
         publication: resolve(__dirname, "src/publication.html"),
         alerts: resolve(__dirname, "src/alerts.html"),

@@ -1,4 +1,4 @@
-import { html, nothing, type TemplateResult } from 'lit';
+import { html, type TemplateResult } from 'lit';
 import { DataFactory } from 'rdf-data-factory';
 import type { CustomWidgetDefinition, CustomWidgetRenderContext, UIComponent } from '../../types.ts';
 

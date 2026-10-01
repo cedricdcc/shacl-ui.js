@@ -5,7 +5,6 @@ import type {Term} from "@rdfjs/types";
 import {
    type CustomWidgetDefinition,
    type CustomWidgetInstance,
-   type CustomWidgetMountContext,
    type CustomWidgetRenderContext,
    type RootRenderSlot,
    type TailwindClasses,
