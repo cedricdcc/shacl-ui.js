@@ -486,7 +486,12 @@ npm run dev
 Navigate to `http://localhost:5173/src/workbench.html` (or click "Open Interactive Workbench" in the standard demo header).
 
 Features of the workbench:
-1. **SHACL Shape Editor (Left Panel)**: Real-time syntax-highlighted Turtle editor powered by CodeMirror 6 with preset shapes (Marine Observation featuring VocabServer, Person Profile, Scholarly Publication, and Blank Custom Shape), live error checking, and keyboard shortcut (`Ctrl+Enter` to generate).
+1. **SHACL Shape Editor (Left Panel)**: Real-time syntax-highlighted Turtle editor powered by CodeMirror 6 with live SHACL quad and NodeShape detection, syntax diagnostics, and presets including:
+   - **Oceanographic Cruise (Flagship)**: Multi-tier marine expedition metadata demonstrating double-nested shapes (`sh:node`), `sh:pattern` regex validation (cruise codes, ORCID URIs, STCW seafarer certificates, equipment serial tags), polymorphic `sh:or` variant switching (Scientific Researcher vs Maritime Officer, In-Situ Continuous Sensor vs Discrete Sampler), and live VLIZ VocabServer integrations for People (`marineinfo-persons`), Organizations (`marineinfo-institutes`), BODC PUV Measurement Parameters (`P01`), Open Licenses (`vliz-dams-licenses`), and Coordinate Reference Systems (`vliz-dams-crs`).
+   - **Marine Scientific Observation**: Focused VocabServer demonstration for CRS lookups.
+   - **Scholarly Publication**: Rich Dublin Core / Schema.org metadata.
+   - **Person Profile**: Standard built-in HTML5 and numeric constraints.
+   - **Custom Blank Shape**: Prototyping scratchpad for user-defined SHACL shapes.
 2. **Dynamic SHACL Form Preview (Center Panel)**: Live `<shacl-renderer>` mounting with Dark/Light theme switching and Edit/View mode toggling.
 3. **Live Turtle Data Graph & Validation (Right Panel)**: Instant serialization of form updates into Turtle format, triple count and payload size indicators, clipboard copy and file download, plus automated real-time SHACL validation powered by `shacl-engine`.
 

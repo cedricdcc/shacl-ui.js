@@ -32,6 +32,309 @@ interface Preset {
 }
 
 const PRESETS: Record<string, Preset> = {
+  cruise: {
+    id: 'cruise',
+    name: 'Oceanographic Cruise (Double-Nested, Regex & VocabServer)',
+    assetUrl: 'assets/cruise-expedition.ttl',
+    focusNode: 'http://example.org/cruise/2026-NORTHSEA',
+    targetShape: 'http://example.org/CruiseExpeditionShape',
+    targetClass: 'http://example.org/OceanographicCruise',
+    ttl: `@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix shui:   <http://www.w3.org/ns/shacl-ui/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix schema: <http://schema.org/> .
+@prefix ex:     <http://example.org/> .
+
+ex:CruiseExpeditionShape
+    a sh:NodeShape ;
+    sh:targetClass ex:OceanographicCruise ;
+    sh:name "Oceanographic Research Cruise Expedition" ;
+    sh:description "Multi-tier marine expedition metadata form demonstrating double-nested shapes, sh:pattern regex validation, sh:or variant switching, and live VLIZ VocabServer integrations." ;
+    sh:property [
+        sh:path ex:cruiseCode ;
+        sh:name "Cruise Expedition Code" ;
+        sh:description "Official expedition identifier (Format: CRUISE-YYYY-NAME, e.g. CRUISE-2026-NORTHSEA1)" ;
+        sh:datatype xsd:string ;
+        sh:pattern "^CRUISE-[0-9]{4}-[A-Z0-9]+$" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:name ;
+        sh:name "Expedition Campaign Title" ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 2 ;
+    ] ;
+    sh:property [
+        sh:path schema:startDate ;
+        sh:name "Departure Date" ;
+        sh:datatype xsd:date ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 3 ;
+    ] ;
+    sh:property [
+        sh:path schema:endDate ;
+        sh:name "Return Date" ;
+        sh:datatype xsd:date ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 4 ;
+    ] ;
+    sh:property [
+        sh:path schema:license ;
+        sh:name "Open Data License" ;
+        sh:description "Select open data license from VLIZ VocabServer" ;
+        sh:nodeKind sh:IRI ;
+        shui:widget ex:VocabServerEditor ;
+        ex:searchEndpoint "https://vocab.vliz.be" ;
+        ex:sourceVocabularies "https://my-application.com/vocabulary-alias/vliz-dams-licenses" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 5 ;
+    ] ;
+    sh:property [
+        sh:path ex:coordinateReferenceSystem ;
+        sh:name "Navigation CRS (Spatial Reference)" ;
+        sh:description "Select coordinate reference system from VLIZ VocabServer" ;
+        sh:nodeKind sh:IRI ;
+        shui:widget ex:VocabServerEditor ;
+        ex:searchEndpoint "https://vocab.vliz.be" ;
+        ex:sourceVocabularies "https://my-application.com/vocabulary-alias/vliz-dams-crs" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 6 ;
+    ] ;
+    sh:property [
+        sh:path ex:onboardPersonnel ;
+        sh:name "Onboard Personnel and Scientific Team" ;
+        sh:description "Expedition participants, their institute affiliations, and specific role credentials." ;
+        sh:node ex:OnboardPersonnelShape ;
+        sh:order 7 ;
+    ] ;
+    sh:property [
+        sh:path ex:deployedEquipment ;
+        sh:name "Deployed Equipment and Instrumentation" ;
+        sh:description "Instruments deployed during cruise with calibration specs or sampling procedures." ;
+        sh:node ex:EquipmentDeploymentShape ;
+        sh:order 8 ;
+    ] .
+
+ex:OnboardPersonnelShape
+    a sh:NodeShape ;
+    sh:name "Expedition Participant" ;
+    sh:property [
+        sh:path schema:person ;
+        sh:name "Person (MarineInfo Registry)" ;
+        sh:description "Search registered marine scientists and personnel from VLIZ MarineInfo" ;
+        sh:nodeKind sh:IRI ;
+        shui:widget ex:VocabServerEditor ;
+        ex:searchEndpoint "https://vocab.vliz.be" ;
+        ex:sourceVocabularies "https://my-application.com/vocabulary-alias/marineinfo-persons" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:affiliation ;
+        sh:name "Home Institution / Affiliation" ;
+        sh:description "Search registered research organizations and institutes from VLIZ MarineInfo" ;
+        sh:nodeKind sh:IRI ;
+        shui:widget ex:VocabServerEditor ;
+        ex:searchEndpoint "https://vocab.vliz.be" ;
+        ex:sourceVocabularies "https://my-application.com/vocabulary-alias/marineinfo-institutes" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 2 ;
+    ] ;
+    sh:property [
+        sh:path ex:roleSpecification ;
+        sh:name "Participant Category and Role" ;
+        sh:order 3 ;
+        sh:or (
+            [ sh:node ex:ScientistRoleShape ; sh:name "Scientific Researcher" ]
+            [ sh:node ex:CrewRoleShape ; sh:name "Ship Crew / Maritime Officer" ]
+        ) ;
+    ] .
+
+ex:ScientistRoleShape
+    a sh:NodeShape ;
+    sh:name "Scientific Researcher" ;
+    sh:property [
+        sh:path ex:orcid ;
+        sh:name "ORCID Identifier" ;
+        sh:description "Standard ORCID URI (e.g. https://orcid.org/0000-0002-1825-0097)" ;
+        sh:datatype xsd:string ;
+        sh:pattern "^https://orcid\\\\.org/[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 1 ;
+    ] ;
+    sh:property [
+        sh:path ex:scientificRank ;
+        sh:name "Expedition Science Role" ;
+        sh:in ( "Chief Scientist" "Principal Investigator" "Postdoctoral Researcher" "PhD Candidate" "Marine Laboratory Technician" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 2 ;
+    ] ;
+    sh:property [
+        sh:path ex:workPackage ;
+        sh:name "Work Package / Research Topic" ;
+        sh:datatype xsd:string ;
+        sh:order 3 ;
+    ] .
+
+ex:CrewRoleShape
+    a sh:NodeShape ;
+    sh:name "Ship Crew / Maritime Officer" ;
+    sh:property [
+        sh:path ex:stcwCertificate ;
+        sh:name "STCW Seafarer Certificate ID" ;
+        sh:description "IMO STCW Maritime qualification code (Format: STCW-CC-123456, e.g. STCW-BE-102948)" ;
+        sh:datatype xsd:string ;
+        sh:pattern "^STCW-[A-Z]{2}-[0-9]{6}$" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 1 ;
+    ] ;
+    sh:property [
+        sh:path ex:maritimeRank ;
+        sh:name "Maritime Rank" ;
+        sh:in ( "Captain / Master" "Chief Mate" "Second Officer" "Chief Engineer" "Bosun" "Deck Rating" ) ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 2 ;
+    ] ;
+    sh:property [
+        sh:path ex:watchSchedule ;
+        sh:name "Assigned Watch Schedule" ;
+        sh:datatype xsd:string ;
+        sh:order 3 ;
+    ] .
+
+ex:EquipmentDeploymentShape
+    a sh:NodeShape ;
+    sh:name "Equipment Deployment" ;
+    sh:property [
+        sh:path schema:identifier ;
+        sh:name "Equipment Serial Tag" ;
+        sh:description "Hardware inventory code (Format: EQ-XXXX-1234, e.g. EQ-CTD1-2026)" ;
+        sh:datatype xsd:string ;
+        sh:pattern "^EQ-[A-Z0-9]{4}-[0-9]{4}$" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:name ;
+        sh:name "Instrument Model / Tag" ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 2 ;
+    ] ;
+    sh:property [
+        sh:path ex:instrumentType ;
+        sh:name "Instrument Type Specification" ;
+        sh:order 3 ;
+        sh:or (
+            [ sh:node ex:InSituSensorShape ; sh:name "In-Situ Continuous Sensor" ]
+            [ sh:node ex:WaterSedimentSamplerShape ; sh:name "Autonomous Discrete Sampler" ]
+        ) ;
+    ] .
+
+ex:InSituSensorShape
+    a sh:NodeShape ;
+    sh:name "In-Situ Continuous Sensor" ;
+    sh:property [
+        sh:path ex:sensorPayload ;
+        sh:name "Sensor Measurement Specification" ;
+        sh:node ex:SensorPayloadMeasurementShape ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 1 ;
+    ] .
+
+ex:SensorPayloadMeasurementShape
+    a sh:NodeShape ;
+    sh:name "Measured Parameter and Calibration" ;
+    sh:property [
+        sh:path ex:measuredParameter ;
+        sh:name "Oceanographic Parameter (BODC PUV P01)" ;
+        sh:description "Search standardized parameter terms from BODC Parameter Usage Vocabulary (P01)" ;
+        sh:nodeKind sh:IRI ;
+        shui:widget ex:VocabServerEditor ;
+        ex:searchEndpoint "https://vocab.vliz.be" ;
+        ex:sourceVocabularies "https://my-application.com/vocabulary-alias/P01" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 1 ;
+    ] ;
+    sh:property [
+        sh:path ex:calibrationDate ;
+        sh:name "Latest Calibration Date" ;
+        sh:datatype xsd:date ;
+        sh:order 2 ;
+    ] ;
+    sh:property [
+        sh:path ex:samplingFrequencyHz ;
+        sh:name "Sampling Frequency (Hz)" ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0.1 ;
+        sh:maxInclusive 100.0 ;
+        sh:order 3 ;
+    ] ;
+    sh:property [
+        sh:path ex:maxOperatingDepthM ;
+        sh:name "Maximum Operating Depth (meters)" ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 0 ;
+        sh:maxInclusive 11000 ;
+        sh:order 4 ;
+    ] .
+
+ex:WaterSedimentSamplerShape
+    a sh:NodeShape ;
+    sh:name "Autonomous Discrete Sampler" ;
+    sh:property [
+        sh:path ex:samplingProcedure ;
+        sh:name "Sampling Protocol and Specifications" ;
+        sh:node ex:SamplerSpecificationShape ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:order 1 ;
+    ] .
+
+ex:SamplerSpecificationShape
+    a sh:NodeShape ;
+    sh:name "Sampler Specifications" ;
+    sh:property [
+        sh:path ex:bottleCapacityL ;
+        sh:name "Chamber Capacity (Liters)" ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0.5 ;
+        sh:maxInclusive 50.0 ;
+        sh:order 1 ;
+    ] ;
+    sh:property [
+        sh:path ex:targetSubstrate ;
+        sh:name "Target Marine Substrate" ;
+        sh:in ( "Surface Seawater" "Deep Bathypelagic Seawater" "Benthic Sediment Core" "Suspended Particulate Matter" ) ;
+        sh:order 2 ;
+    ] ;
+    sh:property [
+        sh:path schema:description ;
+        sh:name "Sample Preservation Protocol" ;
+        sh:datatype xsd:string ;
+        sh:singleLine false ;
+        sh:order 3 ;
+    ] .
+`,
+  },
   marine: {
     id: 'marine',
     name: 'Marine Scientific Observation (VocabServer)',
@@ -301,7 +604,7 @@ function initCodeMirrorEditors(): void {
   // Shape editor (read-write)
   shapeEditor = new EditorView({
     state: EditorState.create({
-      doc: PRESETS.marine.ttl,
+      doc: PRESETS.cruise.ttl,
       extensions: [
         basicSetup,
         turtleLang,
@@ -541,7 +844,7 @@ function setupEventListeners(): void {
     opt.textContent = p.name;
     presetSelect.appendChild(opt);
   });
-  presetSelect.value = 'marine';
+  presetSelect.value = 'cruise';
 
   // Preset switch
   presetSelect.addEventListener('change', async () => {
@@ -705,7 +1008,7 @@ async function main(): Promise<void> {
   initCodeMirrorEditors();
   setupEventListeners();
   await handleShapeDocChanged();
-  shapeSelect.value = PRESETS.marine.targetShape;
+  shapeSelect.value = PRESETS.cruise.targetShape;
   await generateForm();
 }
 
