@@ -1024,12 +1024,120 @@ function setupEventListeners(): void {
 }
 
 // ---------------------------------------------------------------------------
+// Interactive 3-Panel Resizing & Focus Mode
+// ---------------------------------------------------------------------------
+
+function setupPanelResizing(): void {
+  const container = document.getElementById('workbench-panels') as HTMLElement | null;
+  const resizerLeft = document.getElementById('resizer-left') as HTMLElement | null;
+  const resizerRight = document.getElementById('resizer-right') as HTMLElement | null;
+  const btnExpandForm = document.getElementById('btn-expand-form') as HTMLButtonElement | null;
+  const textExpandForm = document.getElementById('text-expand-form') as HTMLElement | null;
+
+  if (!container || !resizerLeft || !resizerRight) return;
+
+  const STORAGE_KEY = 'shacl_workbench_panel_widths';
+
+  // Restore saved column template if exists
+  const savedTemplate = localStorage.getItem(STORAGE_KEY);
+  if (savedTemplate && !window.matchMedia('(max-width: 1100px)').matches) {
+    container.style.gridTemplateColumns = savedTemplate;
+  }
+
+  function startDragging(e: MouseEvent, isLeft: boolean) {
+    e.preventDefault();
+    const activeResizer = isLeft ? resizerLeft! : resizerRight!;
+    activeResizer.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const containerRect = container!.getBoundingClientRect();
+    const totalWidth = containerRect.width;
+
+    function onMouseMove(moveEvent: MouseEvent) {
+      const offsetX = moveEvent.clientX - containerRect.left;
+      const computed = window.getComputedStyle(container!).gridTemplateColumns.split(' ');
+      if (computed.length < 5) return;
+
+      const w1 = parseFloat(computed[0]);
+      const w2 = parseFloat(computed[2]);
+      const w3 = parseFloat(computed[4]);
+
+      let newW1 = w1;
+      let newW2 = w2;
+      let newW3 = w3;
+      const minW = 200; // minimum panel width in px
+
+      if (isLeft) {
+        newW1 = Math.max(minW, Math.min(offsetX, totalWidth - (w3 + minW + 24)));
+        newW2 = Math.max(minW, (w1 + w2) - newW1);
+      } else {
+        const offsetFromRight = totalWidth - offsetX;
+        newW3 = Math.max(minW, Math.min(offsetFromRight, totalWidth - (w1 + minW + 24)));
+        newW2 = Math.max(minW, (w2 + w3) - newW3);
+      }
+
+      const template = `${newW1}px 8px ${newW2}px 8px ${newW3}px`;
+      container!.style.gridTemplateColumns = template;
+      localStorage.setItem(STORAGE_KEY, template);
+    }
+
+    function onMouseUp() {
+      activeResizer.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    }
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }
+
+  resizerLeft.addEventListener('mousedown', (e) => startDragging(e, true));
+  resizerRight.addEventListener('mousedown', (e) => startDragging(e, false));
+
+  // Double click resets to generous default
+  const resetLayout = () => {
+    container.classList.remove('focus-form');
+    container.style.gridTemplateColumns = '';
+    localStorage.removeItem(STORAGE_KEY);
+    if (textExpandForm) textExpandForm.textContent = 'Focus Form';
+    showToast('Layout reset to default');
+  };
+
+  resizerLeft.addEventListener('dblclick', resetLayout);
+  resizerRight.addEventListener('dblclick', resetLayout);
+
+  // Focus Form Toggle button
+  if (btnExpandForm) {
+    btnExpandForm.addEventListener('click', () => {
+      const isFocused = container.classList.toggle('focus-form');
+      if (isFocused) {
+        if (textExpandForm) textExpandForm.textContent = 'Restore Grid';
+        showToast('Form expanded (Focus Mode)');
+      } else {
+        if (textExpandForm) textExpandForm.textContent = 'Focus Form';
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          container.style.gridTemplateColumns = saved;
+        } else {
+          container.style.gridTemplateColumns = '';
+        }
+        showToast('Restored standard 3-panel view');
+      }
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Application Entrypoint
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
   initCodeMirrorEditors();
   setupEventListeners();
+  setupPanelResizing();
   await handleShapeDocChanged();
   shapeSelect.value = PRESETS.cruise.targetShape;
   await generateForm();

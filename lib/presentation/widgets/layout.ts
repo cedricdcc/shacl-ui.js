@@ -248,7 +248,7 @@ export function renderUIComponents(renderer: ShaclRenderer, uiComponents: UIComp
 
            if (!group) {
                return html`
-                   <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
                        ${components.map(c => {
                            const isFullWidth = components.length === 1
                                || c.node != null

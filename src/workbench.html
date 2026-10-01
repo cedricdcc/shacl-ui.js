@@ -91,7 +91,7 @@
       </header>
 
       <!-- 3-Panel Main Workbench -->
-      <main class="workbench-panels">
+      <main class="workbench-panels" id="workbench-panels">
         <!-- Panel 1: SHACL Shape Editor (Left) -->
         <section class="panel panel-editor" id="panel-editor">
           <div class="panel-header">
@@ -133,6 +133,9 @@
           </div>
         </section>
 
+        <!-- Left Resizer Divider -->
+        <div class="panel-resizer" id="resizer-left" title="Drag to resize (Double-click to reset)"></div>
+
         <!-- Panel 2: Live SHACL Form (Center) -->
         <section class="panel panel-form" id="panel-form">
           <div class="panel-header">
@@ -144,6 +147,15 @@
               </span>
             </div>
             <div class="panel-actions">
+              <button id="btn-expand-form" class="btn-ghost-sm" title="Expand Form View (Focus Mode)">
+                <svg id="icon-expand-form" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+                <span id="text-expand-form">Focus Form</span>
+              </button>
               <button id="btn-re-render" class="btn-ghost-sm" title="Re-render Form from Shape">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="23 4 23 10 17 10"></polyline>
@@ -180,6 +192,9 @@
             </span>
           </div>
         </section>
+
+        <!-- Right Resizer Divider -->
+        <div class="panel-resizer" id="resizer-right" title="Drag to resize (Double-click to reset)"></div>
 
         <!-- Panel 3: Generated Turtle (.ttl) Output (Right) -->
         <section class="panel panel-output" id="panel-output">
