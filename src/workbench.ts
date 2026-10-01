@@ -89,6 +89,7 @@ ex:CruiseExpeditionShape
         sh:name "Open Data License" ;
         sh:description "Select open data license from VLIZ VocabServer" ;
         sh:nodeKind sh:IRI ;
+        shui:editor ex:VocabServerEditor ;
         shui:widget ex:VocabServerEditor ;
         ex:searchEndpoint "https://vocab.vliz.be" ;
         ex:sourceVocabularies "https://my-application.com/vocabulary-alias/vliz-dams-licenses" ;
@@ -101,6 +102,7 @@ ex:CruiseExpeditionShape
         sh:name "Navigation CRS (Spatial Reference)" ;
         sh:description "Select coordinate reference system from VLIZ VocabServer" ;
         sh:nodeKind sh:IRI ;
+        shui:editor ex:VocabServerEditor ;
         shui:widget ex:VocabServerEditor ;
         ex:searchEndpoint "https://vocab.vliz.be" ;
         ex:sourceVocabularies "https://my-application.com/vocabulary-alias/vliz-dams-crs" ;
@@ -112,14 +114,20 @@ ex:CruiseExpeditionShape
         sh:path ex:onboardPersonnel ;
         sh:name "Onboard Personnel and Scientific Team" ;
         sh:description "Expedition participants, their institute affiliations, and specific role credentials." ;
+        shui:editor shui:DetailsEditor ;
+        shui:widget shui:DetailsEditor ;
         sh:node ex:OnboardPersonnelShape ;
+        sh:minCount 1 ;
         sh:order 7 ;
     ] ;
     sh:property [
         sh:path ex:deployedEquipment ;
         sh:name "Deployed Equipment and Instrumentation" ;
         sh:description "Instruments deployed during cruise with calibration specs or sampling procedures." ;
+        shui:editor shui:DetailsEditor ;
+        shui:widget shui:DetailsEditor ;
         sh:node ex:EquipmentDeploymentShape ;
+        sh:minCount 1 ;
         sh:order 8 ;
     ] .
 
@@ -131,6 +139,7 @@ ex:OnboardPersonnelShape
         sh:name "Person (MarineInfo Registry)" ;
         sh:description "Search registered marine scientists and personnel from VLIZ MarineInfo" ;
         sh:nodeKind sh:IRI ;
+        shui:editor ex:VocabServerEditor ;
         shui:widget ex:VocabServerEditor ;
         ex:searchEndpoint "https://vocab.vliz.be" ;
         ex:sourceVocabularies "https://my-application.com/vocabulary-alias/marineinfo-persons" ;
@@ -143,6 +152,7 @@ ex:OnboardPersonnelShape
         sh:name "Home Institution / Affiliation" ;
         sh:description "Search registered research organizations and institutes from VLIZ MarineInfo" ;
         sh:nodeKind sh:IRI ;
+        shui:editor ex:VocabServerEditor ;
         shui:widget ex:VocabServerEditor ;
         ex:searchEndpoint "https://vocab.vliz.be" ;
         ex:sourceVocabularies "https://my-application.com/vocabulary-alias/marineinfo-institutes" ;
@@ -153,6 +163,10 @@ ex:OnboardPersonnelShape
     sh:property [
         sh:path ex:roleSpecification ;
         sh:name "Participant Category and Role" ;
+        shui:editor shui:DetailsEditor ;
+        shui:widget shui:DetailsEditor ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
         sh:order 3 ;
         sh:or (
             [ sh:node ex:ScientistRoleShape ; sh:name "Scientific Researcher" ]
@@ -240,6 +254,10 @@ ex:EquipmentDeploymentShape
     sh:property [
         sh:path ex:instrumentType ;
         sh:name "Instrument Type Specification" ;
+        shui:editor shui:DetailsEditor ;
+        shui:widget shui:DetailsEditor ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
         sh:order 3 ;
         sh:or (
             [ sh:node ex:InSituSensorShape ; sh:name "In-Situ Continuous Sensor" ]
@@ -253,6 +271,8 @@ ex:InSituSensorShape
     sh:property [
         sh:path ex:sensorPayload ;
         sh:name "Sensor Measurement Specification" ;
+        shui:editor shui:DetailsEditor ;
+        shui:widget shui:DetailsEditor ;
         sh:node ex:SensorPayloadMeasurementShape ;
         sh:minCount 1 ;
         sh:maxCount 1 ;
@@ -267,6 +287,7 @@ ex:SensorPayloadMeasurementShape
         sh:name "Oceanographic Parameter (BODC PUV P01)" ;
         sh:description "Search standardized parameter terms from BODC Parameter Usage Vocabulary (P01)" ;
         sh:nodeKind sh:IRI ;
+        shui:editor ex:VocabServerEditor ;
         shui:widget ex:VocabServerEditor ;
         ex:searchEndpoint "https://vocab.vliz.be" ;
         ex:sourceVocabularies "https://my-application.com/vocabulary-alias/P01" ;
@@ -303,6 +324,8 @@ ex:WaterSedimentSamplerShape
     sh:property [
         sh:path ex:samplingProcedure ;
         sh:name "Sampling Protocol and Specifications" ;
+        shui:editor shui:DetailsEditor ;
+        shui:widget shui:DetailsEditor ;
         sh:node ex:SamplerSpecificationShape ;
         sh:minCount 1 ;
         sh:maxCount 1 ;

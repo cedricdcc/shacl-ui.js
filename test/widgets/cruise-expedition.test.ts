@@ -45,17 +45,12 @@ describe('Cruise Expedition Flagship Shape', () => {
   });
 
   it('constructs UI components and renders without errors in <shacl-renderer>', async () => {
+    const scoringPath = path.resolve(__dirname, '../../src/assets/widget-scoring.ttl');
+    const scoringTtl = fs.readFileSync(scoringPath, 'utf8');
+
     const el = document.createElement('shacl-renderer') as ShaclRenderer;
     el.useLightDom = true;
-    el.widgetScoringGraph = `
-      @prefix shui: <http://www.w3.org/ns/shacl-ui/> .
-      @prefix ex: <http://example.org/> .
-      ex:tf a shui:WidgetScore ; shui:widget shui:TextFieldEditor ; shui:score 5 .
-      ex:dt a shui:WidgetScore ; shui:widget shui:DatePickerEditor ; shui:score 5 .
-      ex:num a shui:WidgetScore ; shui:widget shui:NumberFieldEditor ; shui:score 5 .
-      ex:enum a shui:WidgetScore ; shui:widget shui:EnumSelectEditor ; shui:score 10 .
-      ex:details a shui:WidgetScore ; shui:widget shui:DetailsEditor ; shui:score 5 .
-    `;
+    el.widgetScoringGraph = scoringTtl;
     el.widgetScoringGraphContentType = 'text/turtle';
     el.shapesGraph = shapeTtl;
     el.shapesGraphContentType = 'text/turtle';
@@ -81,12 +76,84 @@ describe('Cruise Expedition Flagship Shape', () => {
     expect(cruiseCodeComp).toBeDefined();
     expect(cruiseCodeComp?.pattern).toBe('^CRUISE-[0-9]{4}-[A-Z0-9]+$');
 
-    // Verify nested equipment and personnel components exist
+    // Root license and CRS properties use VocabServer
+    const licenseComp = el.ui.find((c) => c.label === 'Open Data License');
+    expect(licenseComp).toBeDefined();
+    expect(licenseComp?.defaultWidget).toMatch(/VocabServerEditor/);
+
+    const crsComp = el.ui.find((c) => c.label === 'Navigation CRS (Spatial Reference)');
+    expect(crsComp).toBeDefined();
+    expect(crsComp?.defaultWidget).toMatch(/VocabServerEditor/);
+
+    // Verify personnel component uses DetailsEditor and has nested children
     const personnelComp = el.ui.find((c) => c.label === 'Onboard Personnel and Scientific Team');
     expect(personnelComp).toBeDefined();
+    expect(personnelComp?.defaultWidget).toBe('http://www.w3.org/ns/shacl-ui/DetailsEditor');
+    expect(personnelComp?.children).toBeDefined();
+    expect(personnelComp?.children?.length).toBeGreaterThan(0);
 
+    const personChildren = personnelComp?.children?.[0] ?? [];
+    const personField = personChildren.find((c) => c.label === 'Person (MarineInfo Registry)');
+    expect(personField).toBeDefined();
+    expect(personField?.defaultWidget).toMatch(/VocabServerEditor/);
+
+    const affiliationField = personChildren.find((c) => c.label === 'Home Institution / Affiliation');
+    expect(affiliationField).toBeDefined();
+    expect(affiliationField?.defaultWidget).toMatch(/VocabServerEditor/);
+
+    const roleField = personChildren.find((c) => c.label === 'Participant Category and Role');
+    expect(roleField).toBeDefined();
+    expect(roleField?.defaultWidget).toBe('http://www.w3.org/ns/shacl-ui/DetailsEditor');
+    expect(roleField?.orNode).toHaveLength(2);
+    expect(roleField?.children).toBeDefined();
+    expect(roleField?.children?.length).toBeGreaterThan(0);
+
+    const roleChildren = roleField?.children?.[0] ?? [];
+    const orcidField = roleChildren.find((c) => c.label === 'ORCID Identifier');
+    expect(orcidField).toBeDefined();
+    expect(orcidField?.pattern).toBe('^https://orcid\\.org/[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$');
+
+    // Verify equipment component uses DetailsEditor and has nested children
     const equipmentComp = el.ui.find((c) => c.label === 'Deployed Equipment and Instrumentation');
     expect(equipmentComp).toBeDefined();
+    expect(equipmentComp?.defaultWidget).toBe('http://www.w3.org/ns/shacl-ui/DetailsEditor');
+    expect(equipmentComp?.children).toBeDefined();
+    expect(equipmentComp?.children?.length).toBeGreaterThan(0);
+
+    const equipChildren = equipmentComp?.children?.[0] ?? [];
+    const equipSerial = equipChildren.find((c) => c.label === 'Equipment Serial Tag');
+    expect(equipSerial).toBeDefined();
+    expect(equipSerial?.pattern).toBe('^EQ-[A-Z0-9]{4}-[0-9]{4}$');
+
+    const equipType = equipChildren.find((c) => c.label === 'Instrument Type Specification');
+    expect(equipType).toBeDefined();
+    expect(equipType?.defaultWidget).toBe('http://www.w3.org/ns/shacl-ui/DetailsEditor');
+    expect(equipType?.orNode).toHaveLength(2);
+    expect(equipType?.children).toBeDefined();
+    expect(equipType?.children?.length).toBeGreaterThan(0);
+
+    const sensorOptionChildren = equipType?.children?.[0] ?? [];
+    const payloadProp = sensorOptionChildren.find((c) => c.label === 'Sensor Measurement Specification');
+    expect(payloadProp).toBeDefined();
+    expect(payloadProp?.defaultWidget).toBe('http://www.w3.org/ns/shacl-ui/DetailsEditor');
+    expect(payloadProp?.children).toBeDefined();
+    expect(payloadProp?.children?.length).toBeGreaterThan(0);
+
+    const payloadChildren = payloadProp?.children?.[0] ?? [];
+    const measuredParam = payloadChildren.find((c) => c.label === 'Oceanographic Parameter (BODC PUV P01)');
+    expect(measuredParam).toBeDefined();
+    expect(measuredParam?.defaultWidget).toMatch(/VocabServerEditor/);
+
+    // DOM Verification: check that custom elements and widgets are rendered into DOM
+    const vocabBars = el.querySelectorAll('vocab-search-bar');
+    expect(vocabBars.length).toBeGreaterThanOrEqual(3); // license, crs, person, affiliation, measuredParam...
+
+    // Verify pattern inputs are rendered
+    const orcidInput = el.querySelector('input[pattern="^https://orcid\\\\.org/[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$"]');
+    expect(orcidInput).not.toBeNull();
+
+    const equipInput = el.querySelector('input[pattern="^EQ-[A-Z0-9]{4}-[0-9]{4}$"]');
+    expect(equipInput).not.toBeNull();
 
     el.remove();
   });

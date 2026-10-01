@@ -298,8 +298,11 @@ export function getDefaultTermForWidget(renderer: ShaclRenderer, widget: string 
             ? df.blankNode()
             : (uiComponent.nodeKind?.equals(SH('IRI')) || uiComponent.nodeKind?.equals(SH('IRIOrLiteral'))
                ? df.namedNode(`urn:uuid:${crypto.randomUUID()}`)
-               : renderer.preferSkolemizedBlankNodes ? df.namedNode(`urn:uuid:${crypto.randomUUID()}`) : df.blankNode());
-         if (uiComponent.children != undefined && addChildren) {
+               : (renderer.preferSkolemizedBlankNodes ? df.namedNode(`urn:uuid:${crypto.randomUUID()}`) : df.blankNode()));
+         if (addChildren) {
+            if (uiComponent.children === undefined) {
+               uiComponent.children = [];
+            }
             // If defaultChild is set on the uiComponent, use it as default children for the details editor
             // Otherwise, if class and classes are set on the uiComponent, find the classValue that matches the class and use its children as default children for the details editor
             let newChildComponents: UIComponent[] = []

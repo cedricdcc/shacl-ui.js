@@ -767,6 +767,36 @@ async function extractProperty(property: Term, renderer: ShaclRenderer, shapesGr
    element.defaultWidgets = forMode(defaultScores);
    element.defaultWidget = element.defaultWidgets[0]?.widget.value.value;
 
+   if ((element.node || element.orNode || (element.defaultChild && element.defaultChild.length > 0))) {
+      if (!editorDefaultWidget || editorDefaultWidget === shui('TextFieldEditor')) {
+         editorDefaultWidget = shui('DetailsEditor');
+      }
+      if (!viewMode && (!element.defaultWidget || element.defaultWidget === shui('TextFieldEditor'))) {
+         element.defaultWidget = shui('DetailsEditor');
+         element.defaultWidgets = [{
+            widget: {
+               value: df.namedNode(element.defaultWidget),
+               label: 'Details Editor'
+            },
+            source: 'default',
+            score: 40
+         }];
+      } else if (viewMode && (!element.defaultWidget || !isViewerIri(element.defaultWidget))) {
+         element.defaultWidget = shui('DetailsViewer');
+         element.defaultWidgets = [{
+            widget: {
+               value: df.namedNode(element.defaultWidget),
+               label: 'Details Viewer'
+            },
+            source: 'default',
+            score: 40
+         }];
+      }
+      if (element.children === undefined) {
+         element.children = [];
+      }
+   }
+
    if (focusNode) {
       // Score the default widget as if the focus node already held a default value. Rather than
       // cloning the whole data graph per property (O(properties × N)), temporarily add the default
@@ -808,6 +838,33 @@ async function extractProperty(property: Term, renderer: ShaclRenderer, shapesGr
          editorDefaultWidget = topEditor(scores);
          element.defaultWidgets = forMode(scores);
          element.defaultWidget = element.defaultWidgets[0]?.widget.value.value;
+
+         if ((element.node || element.orNode || (element.defaultChild && element.defaultChild.length > 0))) {
+            if (!editorDefaultWidget || editorDefaultWidget === shui('TextFieldEditor')) {
+               editorDefaultWidget = shui('DetailsEditor');
+            }
+            if (!viewMode && (!element.defaultWidget || element.defaultWidget === shui('TextFieldEditor'))) {
+               element.defaultWidget = shui('DetailsEditor');
+               element.defaultWidgets = [{
+                  widget: {
+                     value: df.namedNode(element.defaultWidget),
+                     label: 'Details Editor'
+                  },
+                  source: 'default',
+                  score: 40
+               }];
+            } else if (viewMode && (!element.defaultWidget || !isViewerIri(element.defaultWidget))) {
+               element.defaultWidget = shui('DetailsViewer');
+               element.defaultWidgets = [{
+                  widget: {
+                     value: df.namedNode(element.defaultWidget),
+                     label: 'Details Viewer'
+                  },
+                  source: 'default',
+                  score: 40
+               }];
+            }
+         }
       } finally {
          for (const quad of addedQuads) dataGraph.removeQuad(quad);
       }
