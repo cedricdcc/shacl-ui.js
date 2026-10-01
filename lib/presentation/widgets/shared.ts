@@ -216,6 +216,7 @@ export function renderSelectWidgetIcon(renderer: ShaclRenderer, uiComponent: UIC
    const open = renderer.selectWidgetIconOpen?.[key] ?? false;
 
    const widgets = value.widgets ?? [];
+   if (widgets.length <= 1) return nothing;
 
    return html`
        <div class="relative inline-block">

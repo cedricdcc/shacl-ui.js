@@ -22,9 +22,9 @@ export function renderDetailsEditor(renderer: ShaclRenderer, uiComponent: UIComp
    return html`
        <div class="${twMerge(classes.detailsEditorClass)}">
            ${showHeader ? html`
-               <div class="flex items-center justify-between pb-3 mb-5 border-b border-zinc-200/80 dark:border-zinc-700/60">
+               <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-50/80 dark:bg-zinc-800/80">
                    <div class="inline-flex items-center gap-2">
-                       <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide bg-indigo-50 text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60 shadow-2xs">
+                       <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-600 shadow-2xs">
                            <span class="w-2 h-2 rounded-full bg-indigo-500 dark:bg-indigo-400"></span>
                            ${itemLabel}
                        </span>
@@ -33,7 +33,7 @@ export function renderDetailsEditor(renderer: ShaclRenderer, uiComponent: UIComp
                        <button type="button"
                                title="Remove ${itemLabel}"
                                aria-label="Remove item"
-                               class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-zinc-400 hover:text-red-600 hover:bg-red-50/80 dark:hover:bg-red-950/40 dark:hover:text-red-400 transition-all cursor-pointer border border-transparent hover:border-red-200 dark:hover:border-red-900/50"
+                               class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 dark:hover:text-red-400 transition-all cursor-pointer border border-transparent hover:border-red-200 dark:hover:border-red-900/50"
                                @click="${() => {
                                    uiComponent.children!.splice(index, 1);
                                    renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value, childComponents);
@@ -49,9 +49,11 @@ export function renderDetailsEditor(renderer: ShaclRenderer, uiComponent: UIComp
                </div>
            ` : nothing}
 
-           ${uiComponent.classes && uiComponent.classes.length > 1 ? renderDetailsClassSelect(renderer, uiComponent, value, index, classes) : nothing}
+           <div class="p-5 md:p-6">
+               ${uiComponent.classes && uiComponent.classes.length > 1 ? renderDetailsClassSelect(renderer, uiComponent, value, index, classes) : nothing}
 
-           ${renderUIComponents(renderer, childComponents, classes)}
+               ${renderUIComponents(renderer, childComponents, classes)}
+           </div>
        </div>
    `;
 }

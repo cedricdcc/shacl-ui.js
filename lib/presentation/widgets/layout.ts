@@ -313,9 +313,11 @@ export function renderUIComponent(renderer: ShaclRenderer, uiComponent: UICompon
                            ${renderEditor(renderer, uiComponent, value, index, classes, isHasValue)}
                        </div>
 
-                       <div class="shrink-0 mt-2">
-                           ${renderSelectWidgetIcon(renderer, uiComponent, value, index, classes)}
-                       </div>
+                       ${(value.widgets?.length ?? 0) > 1 ? html`
+                           <div class="shrink-0 mt-2">
+                               ${renderSelectWidgetIcon(renderer, uiComponent, value, index, classes)}
+                           </div>
+                       ` : nothing}
                    </div>
 
                    ${uiComponent.paths.length > 1 ? html`
