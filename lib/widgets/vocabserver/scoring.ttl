@@ -1,0 +1,56 @@
+@prefix ex:    <http://example.org/> .
+@prefix excom: <http://example.com/ns#> .
+@prefix sh:    <http://www.w3.org/ns/shacl#> .
+@prefix shui:  <http://www.w3.org/ns/shacl-ui/> .
+
+# 1. Backwards-compatible excom:vocabServerScore rule (example.com/ns#)
+excom:vocabServerScore
+    a shui:WidgetScore ;
+    shui:widget excom:VocabServerEditor ;
+    shui:score 35 ;
+    shui:shapesGraphShape [
+        a sh:NodeShape ;
+        sh:property [
+            sh:path excom:searchEndpoint ;
+            sh:minCount 1 ;
+        ]
+    ] .
+
+# 2. Heuristic scoring rule when ex:searchEndpoint is declared (example.org)
+ex:vocabServerScore
+    a shui:WidgetScore ;
+    shui:widget ex:VocabServerEditor ;
+    shui:score 35 ;
+    shui:shapesGraphShape [
+        a sh:NodeShape ;
+        sh:property [
+            sh:path ex:searchEndpoint ;
+            sh:minCount 1 ;
+        ]
+    ] .
+
+# 3. Explicit shui:widget assignment rule (Score 50)
+ex:vocabServerExplicitWidgetScore
+    a shui:WidgetScore ;
+    shui:widget ex:VocabServerEditor ;
+    shui:score 50 ;
+    shui:shapesGraphShape [
+        a sh:NodeShape ;
+        sh:property [
+            sh:path shui:widget ;
+            sh:hasValue ex:VocabServerEditor ;
+        ]
+    ] .
+
+# 4. Explicit shui:editor assignment rule (Score 50)
+ex:vocabServerExplicitEditorScore
+    a shui:WidgetScore ;
+    shui:widget ex:VocabServerEditor ;
+    shui:score 50 ;
+    shui:shapesGraphShape [
+        a sh:NodeShape ;
+        sh:property [
+            sh:path shui:editor ;
+            sh:hasValue ex:VocabServerEditor ;
+        ]
+    ] .

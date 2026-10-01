@@ -914,3 +914,9 @@ export type {
   CustomWidgetMountContext,
   CustomWidgetInstance
 } from "./types.ts";
+export {
+  registerVocabServerWidget,
+  VocabServerWidgetDefinition,
+  VOCABSERVER_WIDGET_IRI,
+  VOCABSERVER_WIDGET_IRI_ORG
+} from "./widgets/vocabserver/index.ts";
