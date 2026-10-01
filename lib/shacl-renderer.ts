@@ -11,7 +11,7 @@ import {cloneUiComponent} from "./core/clone.ts";
 import {rdf, xsd, SH, RDF as RDF_} from "./core/namespaces.ts";
 import {type LabelResolutionConfig, resolvePreferredLanguages} from "./core/labels.ts";
 import {toValueNodeLabel} from "./core/labels.ts";
-import {renderRootSlots, addChildrenToDataStore} from "./presentation/widgets.ts";
+import {renderRootSlots, addChildrenToDataStore, getCustomScoringTtls} from "./presentation/widgets.ts";
 import type {Path, RootOrGroup, RootRenderSlot, TailwindClasses, UIComponent, UIComponentValue} from "./types.ts";
 import {STYLING_SLOT_NAMES, STYLING_SLOTS} from "./styling-slots.ts";
 import type {Term} from "@rdfjs/types";
@@ -796,6 +796,9 @@ export class ShaclRenderer extends TwLitElement {
         reconstructUi = true;
       }
       if (reconstructUi) {
+        if (this.widgetScoringStore) {
+          await this.augmentScoringStoreWithCustomWidgets();
+        }
         const explicitFocusNode = this.focusNode?.trim() || undefined;
 
         if (!explicitFocusNode && this.shapesStore && this.dataStore && this.widgetScoringStore) {
@@ -871,6 +874,21 @@ export class ShaclRenderer extends TwLitElement {
       console.error('shacl-renderer: failed to parse graphs or construct the UI', err);
       this.error = err instanceof Error ? err.message : String(err);
       this.loading = false;
+    }
+  }
+
+  private async augmentScoringStoreWithCustomWidgets(): Promise<void> {
+    if (!this.widgetScoringStore) return;
+    const customTtls = getCustomScoringTtls();
+    for (const ttl of customTtls) {
+      try {
+        const customStore = await parseRdf(ttl, 'text/turtle');
+        for (const quad of customStore.getQuads()) {
+          this.widgetScoringStore.addQuad(quad);
+        }
+      } catch (err) {
+        console.warn('Failed to parse custom widget scoring rules:', err);
+      }
     }
   }
 }
