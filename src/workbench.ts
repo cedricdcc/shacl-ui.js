@@ -1,3 +1,4 @@
+import '../lib/core/ensure-process.ts';
 import { basicSetup, EditorView } from 'codemirror';
 import { EditorState, Compartment } from '@codemirror/state';
 import { StreamLanguage } from '@codemirror/language';
@@ -407,6 +408,11 @@ async function generateForm(): Promise<void> {
   renderer.widgetScoringGraphUrl = 'assets/widget-scoring.ttl';
   renderer.shapesGraphContentType = 'text/turtle';
   renderer.shapesGraph = shapeTtl;
+  const targetClassIri = inputTargetClass.value.trim();
+  renderer.dataGraphContentType = 'text/turtle';
+  renderer.dataGraph = targetClassIri
+    ? `<${focusNodeIri}> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <${targetClassIri}> .\n`
+    : '';
   renderer.focusNode = focusNodeIri;
   if (targetShapeIri) {
     renderer.constraintShape = targetShapeIri;

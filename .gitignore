@@ -28,3 +28,7 @@ dist-ssr
 
 # Superpowers specs and plans
 docs/superpowers/
+
+# Agents
+.agents/
+skills-lock.json

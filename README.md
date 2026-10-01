@@ -22,6 +22,10 @@ Give it a data graph, a shapes graph, and a widget-scoring graph; it builds a fu
 - [Collection rendering](#collection-rendering)
 - [Widget scoring](#widget-scoring)
 - [Available widgets](#available-widgets)
+- [Custom widgets & Extensibility](#custom-widgets--extensibility)
+  - [Custom widget registry](#custom-widget-registry)
+  - [VocabServer widget (`ex:VocabServerEditor`)](#vocabserver-widget-exvocabservereditor)
+- [Interactive workbench demo](#interactive-workbench-demo)
 - [Styling & Tailwind CSS classes](#styling--tailwind-css-classes)
 - [Contributing](#contributing)
 
@@ -354,6 +358,137 @@ Set `mode="view"` to render the data read-only using **viewer** widgets instead 
 | `shui:BlankNodeViewer`    | blank nodes                       | A human-readable label of the blank node (falls back to its `_:id`).          |
 | `shui:DetailsViewer`      | IRIs or blank nodes               | The value node's details rendered as a nested, read-only sub-form.            |
 | `shui:ValueTableViewer`   | multiple values (needs `sh:node`) | All values in one scrollable, paginated table; columns from the `sh:node` shape ordered by `sh:order`. |
+
+---
+
+## Custom widgets & Extensibility
+
+`shacl-ui.js` provides a first-class, extensible widget system. You can register custom widgets—ranging from lightweight Lit templates to third-party Web Components and rich JavaScript controls—without modifying core library code, external DOM scraping, or MutationObserver hacks.
+
+### Custom widget registry
+
+Custom widgets are registered using `registerCustomWidget`:
+
+```ts
+import { registerCustomWidget, type CustomWidgetDefinition } from 'shacl-ui';
+import { html } from 'lit';
+import { DataFactory } from 'rdf-data-factory';
+
+const df = new DataFactory();
+
+const colorPickerWidget: CustomWidgetDefinition = {
+  iri: 'http://example.org/ColorPickerEditor',
+  label: 'Hex Color Picker',
+  description: 'Interactive HTML5 color input editor',
+  defaultScoringTtl: `
+    @prefix shui: <http://www.w3.org/ns/shacl-ui/> .
+    @prefix ex: <http://example.org/> .
+
+    ex:ColorPickerScore a shui:WidgetScore ;
+      shui:widget ex:ColorPickerEditor ;
+      shui:score 50 .
+  `,
+  render: (context) => {
+    const hex = context.value?.value?.value || '#000000';
+    return html`
+      <input
+        type="color"
+        class="${context.classes.globalInputFieldClass}"
+        .value="${hex}"
+        ?disabled="${context.disabled}"
+        @change="${(e: Event) => {
+          const val = (e.target as HTMLInputElement).value;
+          context.onValueChange(df.literal(val));
+        }}"
+      />
+    `;
+  },
+};
+
+registerCustomWidget(colorPickerWidget);
+```
+
+#### Lifecycle and Mounting Methods
+
+Each `CustomWidgetDefinition` supports:
+- `render(context: CustomWidgetRenderContext)`: Returns a reactive Lit `TemplateResult`. Ideal for Lit templates, web components, and pure declarative markup.
+- `mount(context: CustomWidgetMountContext)`: Mounts arbitrary DOM elements or framework widgets into `context.container`, returning `{ update?(context), unmount?() }`.
+- `defaultScoringTtl`: Optional Turtle string providing scoring rules for the widget. When supplied, `<shacl-renderer>` automatically parses and appends these rules into its active `widgetScoringStore`.
+
+#### Context properties (`CustomWidgetRenderContext`)
+
+| Property | Type | Description |
+|---|---|---|
+| `renderer` | `ShaclRenderer` | The parent `<shacl-renderer>` element. |
+| `uiComponent` | `UIComponent` | Metadata about the property shape and focus node. |
+| `value` | `UIComponentValue` | The active value object, including its current RDF Term. |
+| `index` | `number` | The zero-based value index for multi-valued properties. |
+| `classes` | `TailwindClasses` | Resolved styling classes with user overrides merged. |
+| `disabled` | `boolean` | Whether the input is disabled. |
+| `mode` | `'edit' \| 'view'` | Active rendering mode. |
+| `annotations` | `Record<string, string>` | Shape annotations extracted from the property shape (e.g. `ex:searchEndpoint`). |
+| `onValueChange` | `(term: Term \| null) => void` | Updates the RDF data store, updates the UI component, and triggers real-time reactivity. |
+
+---
+
+### VocabServer widget (`ex:VocabServerEditor`)
+
+`shacl-ui.js` includes a flagship reference custom widget integrating the official [VLIZ VocabServer Web Component](https://github.com/vlizBE/vocabserver-webcomponent) (`<vocab-search-bar>`), enabling live autocompletion and selection of standardized vocabulary terms from [https://vocab.vliz.be](https://vocab.vliz.be).
+
+To register the VocabServer widget:
+
+```ts
+import { registerVocabServerWidget } from 'shacl-ui';
+
+registerVocabServerWidget();
+```
+
+#### SHACL Shape configuration
+
+Configure your property shapes using `shui:widget ex:VocabServerEditor` and custom parameter annotations:
+
+```turtle
+@prefix sh:     <http://www.w3.org/ns/shacl#> .
+@prefix shui:   <http://www.w3.org/ns/shacl-ui/> .
+@prefix ex:     <http://example.org/> .
+
+ex:ObservationShape
+    a sh:NodeShape ;
+    sh:targetClass ex:Observation ;
+    sh:property [
+        sh:path ex:coordinateReferenceSystem ;
+        sh:name "Coordinate Reference System" ;
+        sh:nodeKind sh:IRI ;
+        shui:widget ex:VocabServerEditor ;
+        ex:searchEndpoint "https://vocab.vliz.be" ;
+        ex:sourceVocabularies "https://my-application.com/vocabulary-alias/vliz-dams-crs" ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+    ] .
+```
+
+Supported property shape annotations:
+- `ex:searchEndpoint`: VocabServer base URL (defaults to `https://vocab.vliz.be`).
+- `ex:sourceVocabularies`: Target vocabulary URI or alias (e.g. `https://my-application.com/vocabulary-alias/vliz-dams-crs`).
+- `ex:sourceDatasets`: Optional dataset URI filter.
+- `languages-string`: Preferred language filter (e.g. `en` or `*`).
+
+---
+
+## Interactive workbench demo
+
+An interactive 3-panel developer workbench is included in the project to test SHACL shapes, dynamic form generation, and RDF output in real-time.
+
+```bash
+npm run dev
+```
+
+Navigate to `http://localhost:5173/src/workbench.html` (or click "Open Interactive Workbench" in the standard demo header).
+
+Features of the workbench:
+1. **SHACL Shape Editor (Left Panel)**: Real-time syntax-highlighted Turtle editor powered by CodeMirror 6 with preset shapes (Marine Observation featuring VocabServer, Person Profile, Scholarly Publication, and Blank Custom Shape), live error checking, and keyboard shortcut (`Ctrl+Enter` to generate).
+2. **Dynamic SHACL Form Preview (Center Panel)**: Live `<shacl-renderer>` mounting with Dark/Light theme switching and Edit/View mode toggling.
+3. **Live Turtle Data Graph & Validation (Right Panel)**: Instant serialization of form updates into Turtle format, triple count and payload size indicators, clipboard copy and file download, plus automated real-time SHACL validation powered by `shacl-engine`.
 
 ---
 

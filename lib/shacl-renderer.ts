@@ -756,7 +756,7 @@ export class ShaclRenderer extends TwLitElement {
       reconstructUi = true;
     }
     try {
-      if ((changedProperties.has('dataGraph') || changedProperties.has('dataGraphContentType')) && this.dataGraph && this.dataGraph.trim().length !== 0 && this.dataGraphContentType && this.dataGraphContentType.trim().length !== 0) {
+      if ((changedProperties.has('dataGraph') || changedProperties.has('dataGraphContentType')) && this.dataGraph !== undefined && this.dataGraphContentType && this.dataGraphContentType.trim().length !== 0) {
         this.loading = true;
         this.dataStore = await parseRdf(this.dataGraph, this.dataGraphContentType);
         reconstructUi = true;
