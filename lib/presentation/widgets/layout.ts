@@ -138,11 +138,13 @@ export function renderRootSlots(
    renderer: ShaclRenderer,
    renderSlots: RootRenderSlot[],
    classes: TailwindClasses,
+   depth: number = 0,
+   ancestors: string[] = []
 ): TemplateResult {
    return html`
        ${renderSlots.map(slot => {
            if (slot.kind === 'component') {
-               return renderUIComponent(renderer, slot.component, classes);
+               return renderUIComponent(renderer, slot.component, classes, depth, ancestors);
            }
 
            if (slot.kind === 'group') {
@@ -152,7 +154,7 @@ export function renderRootSlots(
                        <h2 class="${twMerge(classes.groupLabelClass)}">${group.label}</h2>
                        ${slot.components.map(c => html`
                            <div class="${twMerge(classes.groupElementClass)}">
-                               ${renderUIComponent(renderer, c, classes)}
+                               ${renderUIComponent(renderer, c, classes, depth, ancestors)}
                            </div>
                        `)}
                    </div>
@@ -167,7 +169,7 @@ export function renderRootSlots(
            // selected option's fields.
            if (renderer.mode === 'view' || group.options.length < 2) {
                return section.components.length > 0
-                  ? renderUIComponents(renderer, section.components, classes)
+                  ? renderUIComponents(renderer, section.components, classes, depth, ancestors)
                   : nothing;
            }
 
@@ -222,7 +224,7 @@ export function renderRootSlots(
 
                        <!-- Fields of the currently selected option -->
                        ${section.components.length > 0
-                          ? renderUIComponents(renderer, section.components, classes)
+                          ? renderUIComponents(renderer, section.components, classes, depth, ancestors)
                           : nothing}
                    </div>
                </div>
@@ -231,7 +233,13 @@ export function renderRootSlots(
    `;
 }
 
-export function renderUIComponents(renderer: ShaclRenderer, uiComponents: UIComponent[], classes: TailwindClasses): TemplateResult {
+export function renderUIComponents(
+   renderer: ShaclRenderer,
+   uiComponents: UIComponent[],
+   classes: TailwindClasses,
+   depth: number = 0,
+   ancestors: string[] = []
+): TemplateResult {
    const grouped = new Map<string | undefined, UIComponent[]>();
 
    for (const component of uiComponents) {
@@ -243,12 +251,17 @@ export function renderUIComponents(renderer: ShaclRenderer, uiComponents: UIComp
    }
 
    return html`
+       ${depth >= 2 && ancestors.length > 0 ? html`
+           <div class="${twMerge(classes.nestedBreadcrumbClass)}">
+               <span>${ancestors.join(' › ')}</span>
+           </div>
+       ` : nothing}
        ${Array.from(grouped.entries()).map(([_, components]) => {
            const group = components[0].group;
 
            if (!group) {
                return html`
-                   <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                        ${components.map(c => {
                            const isFullWidth = components.length === 1
                                || c.node != null
@@ -260,7 +273,7 @@ export function renderUIComponents(renderer: ShaclRenderer, uiComponents: UIComp
                                || c.defaultWidget === shui('ValueTableViewer');
                            return html`
                                <div class="${isFullWidth ? 'col-span-full' : 'col-span-1'}">
-                                   ${renderUIComponent(renderer, c, classes)}
+                                   ${renderUIComponent(renderer, c, classes, depth, ancestors)}
                                </div>
                            `;
                        })}
@@ -278,7 +291,7 @@ export function renderUIComponents(renderer: ShaclRenderer, uiComponents: UIComp
 
                    ${components.map(c => html`
                        <div class="${twMerge(classes.groupElementClass)}">
-                           ${renderUIComponent(renderer, c, classes)}
+                           ${renderUIComponent(renderer, c, classes, depth, ancestors)}
                        </div>
                    `)}
                </div>
@@ -287,9 +300,15 @@ export function renderUIComponents(renderer: ShaclRenderer, uiComponents: UIComp
    `;
 }
 
-export function renderUIComponent(renderer: ShaclRenderer, uiComponent: UIComponent, classes: TailwindClasses) {
+export function renderUIComponent(
+   renderer: ShaclRenderer,
+   uiComponent: UIComponent,
+   classes: TailwindClasses,
+   depth: number = 0,
+   ancestors: string[] = []
+) {
    if (renderer.mode === 'view') {
-      return renderUIComponentViewMode(renderer, uiComponent, classes);
+      return renderUIComponentViewMode(renderer, uiComponent, classes, depth, ancestors);
    }
    return html`
        <div class="mb-4">
@@ -310,7 +329,7 @@ export function renderUIComponent(renderer: ShaclRenderer, uiComponent: UICompon
                    <div class="flex items-start gap-2">
                        <div class="flex-1 min-w-0">
                            ${isHasValue ? nothing : renderOrSelectorForValue(renderer, uiComponent, value, index, classes)}
-                           ${renderEditor(renderer, uiComponent, value, index, classes, isHasValue)}
+                           ${renderEditor(renderer, uiComponent, value, index, classes, isHasValue, depth, ancestors)}
                        </div>
 
                        ${(value.widgets?.length ?? 0) > 1 ? html`
@@ -355,7 +374,16 @@ export function renderUIComponent(renderer: ShaclRenderer, uiComponent: UICompon
    `;
 }
 
-export function renderEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
+export function renderEditor(
+   renderer: ShaclRenderer,
+   uiComponent: UIComponent,
+   value: UIComponentValue,
+   index: number,
+   classes: TailwindClasses,
+   disabled: boolean = false,
+   depth: number = 0,
+   ancestors: string[] = []
+) {
    if (value.selectedWidget && hasCustomWidget(value.selectedWidget)) {
       const customWidget = getCustomWidget(value.selectedWidget)!;
       const shapeNode = (uiComponent as any).propertyShape || uiComponent.node || uiComponent.iri;
@@ -404,7 +432,7 @@ export function renderEditor(renderer: ShaclRenderer, uiComponent: UIComponent, 
       case shui("DateTimePickerEditor"):
          return renderDateTimePickerEditor(renderer, uiComponent, value, index, classes, disabled);
       case shui("DetailsEditor"):
-         return renderDetailsEditor(renderer, uiComponent, value, index, classes, disabled);
+         return renderDetailsEditor(renderer, uiComponent, value, index, classes, disabled, depth, ancestors);
       case shui("EnumSelectEditor"):
          return renderEnumSelectEditor(renderer, uiComponent, value, index, classes, disabled);
       case shui("InstancesSelectEditor"):
@@ -451,7 +479,13 @@ export function renderEditor(renderer: ShaclRenderer, uiComponent: UIComponent, 
  * or/alternative-path editing). When the property prefers the multi-viewer shui:ValueTableViewer,
  * all values are rendered as one table.
  */
-function renderUIComponentViewMode(renderer: ShaclRenderer, uiComponent: UIComponent, classes: TailwindClasses) {
+function renderUIComponentViewMode(
+   renderer: ShaclRenderer,
+   uiComponent: UIComponent,
+   classes: TailwindClasses,
+   depth: number = 0,
+   ancestors: string[] = []
+) {
    const header = html`
        ${uiComponent.label ? html`<div class="${twMerge(classes.viewerLabelClass)}">${uiComponent.label}</div>` : nothing}
        ${uiComponent.description ? html`<p class="${twMerge(classes.viewerDescriptionClass)}">${uiComponent.description}</p>` : nothing}
@@ -475,7 +509,7 @@ function renderUIComponentViewMode(renderer: ShaclRenderer, uiComponent: UICompo
                   <div class="${twMerge(classes.viewerValuesClass)}">
                       ${uiComponent.values.map((value, index) => html`
                           <div class="${twMerge(classes.viewerValueClass)}">
-                              ${renderViewer(renderer, uiComponent, value, index, classes)}
+                              ${renderViewer(renderer, uiComponent, value, index, classes, depth, ancestors)}
                           </div>
                       `)}
                   </div>
@@ -485,7 +519,15 @@ function renderUIComponentViewMode(renderer: ShaclRenderer, uiComponent: UICompo
 }
 
 /** Per-value dispatch for view mode: routes value.selectedWidget (a viewer IRI) to its render fn. */
-export function renderViewer(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses) {
+export function renderViewer(
+   renderer: ShaclRenderer,
+   uiComponent: UIComponent,
+   value: UIComponentValue,
+   index: number,
+   classes: TailwindClasses,
+   depth: number = 0,
+   ancestors: string[] = []
+) {
    if (value.selectedWidget && hasCustomWidget(value.selectedWidget)) {
       const customWidget = getCustomWidget(value.selectedWidget)!;
       const shapeNode = (uiComponent as any).propertyShape || uiComponent.node || uiComponent.iri;
@@ -514,7 +556,7 @@ export function renderViewer(renderer: ShaclRenderer, uiComponent: UIComponent, 
       case shui("BlankNodeViewer"):
          return renderBlankNodeViewer(renderer, uiComponent, value, index, classes);
       case shui("DetailsViewer"):
-         return renderDetailsViewer(renderer, uiComponent, value, index, classes);
+         return renderDetailsViewer(renderer, uiComponent, value, index, classes, depth, ancestors);
       case shui("HTMLViewer"):
          return renderHTMLViewer(renderer, uiComponent, value, index, classes);
       case shui("HyperlinkViewer"):

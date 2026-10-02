@@ -10,8 +10,18 @@ import {renderUIComponents} from "./layout.ts";
 import {renderDetailsClassSelect} from "./editors-select.ts";
 import {languageOptions} from "./editors-fields.ts";
 
-export function renderDetailsEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
+export function renderDetailsEditor(
+   renderer: ShaclRenderer,
+   uiComponent: UIComponent,
+   value: UIComponentValue,
+   index: number,
+   classes: TailwindClasses,
+   disabled: boolean = false,
+   depth: number = 0,
+   ancestors: string[] = []
+) {
    const childComponents = uiComponent.children ? (uiComponent.children[index] ?? []) : [];
+   const nextAncestors = uiComponent.label ? [...ancestors, uiComponent.label] : ancestors;
    const canRemove = (uiComponent.node ? (uiComponent.children?.length ?? 0) : uiComponent.values.length) > (uiComponent.minCount || 0);
    const isMultiple = (uiComponent.maxCount ?? 2) > 1 || uiComponent.values.length > 1;
    const showHeader = isMultiple || canRemove;
@@ -52,7 +62,7 @@ export function renderDetailsEditor(renderer: ShaclRenderer, uiComponent: UIComp
            <div class="p-5 md:p-6">
                ${uiComponent.classes && uiComponent.classes.length > 1 ? renderDetailsClassSelect(renderer, uiComponent, value, index, classes) : nothing}
 
-               ${renderUIComponents(renderer, childComponents, classes)}
+               ${renderUIComponents(renderer, childComponents, classes, depth + 1, nextAncestors)}
            </div>
        </div>
    `;

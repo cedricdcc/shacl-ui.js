@@ -10,11 +10,20 @@ import {shortLabel} from "./viewers-shared.ts";
 const VALUE_TABLE_PAGE_SIZE = 10;
 
 /** shui:DetailsViewer — the value node's details rendered as a nested, read-only sub-form. */
-export function renderDetailsViewer(renderer: ShaclRenderer, uiComponent: UIComponent, _value: UIComponentValue, index: number, classes: TailwindClasses) {
+export function renderDetailsViewer(
+   renderer: ShaclRenderer,
+   uiComponent: UIComponent,
+   _value: UIComponentValue,
+   index: number,
+   classes: TailwindClasses,
+   depth: number = 0,
+   ancestors: string[] = []
+) {
    const childComponents = uiComponent.children ? (uiComponent.children[index] ?? []) : [];
+   const nextAncestors = uiComponent.label ? [...ancestors, uiComponent.label] : ancestors;
    return html`
        <div class="${twMerge(classes.detailsViewerClass)}">
-           ${renderUIComponents(renderer, childComponents, classes)}
+           ${renderUIComponents(renderer, childComponents, classes, depth + 1, nextAncestors)}
        </div>
    `;
 }
