@@ -63,20 +63,23 @@ export function renderDetailsEditor(
 
    const defaultOpen = index === 0;
    const isExpanded = renderer.isNestedItemExpanded(uiComponent.uuid, index, defaultOpen);
-   const { summaryTitle, avatarText } = getSummaryLabelAndAvatar(uiComponent, childComponents, index);
+   const { summaryTitle, summarySubtitle, avatarText } = getSummaryLabelAndAvatar(uiComponent, childComponents, index);
 
    return html`
-       <div class="mb-2">
+       <div class="mb-3.5">
            <div class="${twMerge(classes.nestedSummaryRowClass, 'group')}"
                 @click="${() => {
                     renderer.toggleNestedItemExpanded(uiComponent.uuid, index, defaultOpen);
                 }}">
-               <div class="flex items-center gap-2.5 min-w-0 flex-1">
+               <div class="flex items-center gap-3 min-w-0 flex-1">
                    <div class="${twMerge(classes.nestedSummaryAvatarClass)}">
                        ${avatarText}
                    </div>
-                   <div class="flex flex-col min-w-0 flex-1">
+                   <div class="flex flex-col min-w-0 flex-1 leading-snug">
                        <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-200 truncate">${summaryTitle}</span>
+                       ${summarySubtitle ? html`
+                           <span class="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium truncate">${summarySubtitle}</span>
+                       ` : nothing}
                    </div>
                </div>
 
@@ -108,7 +111,7 @@ export function renderDetailsEditor(
            </div>
 
            ${isExpanded ? html`
-               <div class="${twMerge(classes.detailsEditorClass, classes.nestedRailClass, 'mt-2 mb-3')}">
+               <div class="${twMerge(classes.detailsEditorClass, classes.nestedRailClass, 'mt-2 mb-4')}">
                    ${uiComponent.classes && uiComponent.classes.length > 1 ? renderDetailsClassSelect(renderer, uiComponent, value, index, classes) : nothing}
                    ${renderUIComponents(renderer, childComponents, classes, depth + 1, nextAncestors)}
                </div>

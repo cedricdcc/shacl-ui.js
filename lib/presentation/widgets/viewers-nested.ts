@@ -25,14 +25,19 @@ export function renderDetailsViewer(
    const isMultiple = (uiComponent.maxCount ?? 2) > 1 || uiComponent.values.length > 1;
 
    if (isMultiple) {
-      const { summaryTitle, avatarText } = getSummaryLabelAndAvatar(uiComponent, childComponents, index);
+      const { summaryTitle, summarySubtitle, avatarText } = getSummaryLabelAndAvatar(uiComponent, childComponents, index);
       return html`
-          <div class="mb-3">
-              <div class="flex items-center gap-2.5 py-1.5 px-2 mb-1.5 rounded-md bg-zinc-50/60 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-700/60">
+          <div class="mb-4">
+              <div class="flex items-center gap-3 py-2 px-3.5 mb-2 rounded-lg bg-zinc-50/60 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-700/60">
                   <div class="${twMerge(classes.nestedSummaryAvatarClass)}">
                       ${avatarText}
                   </div>
-                  <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-200 truncate">${summaryTitle}</span>
+                  <div class="flex flex-col min-w-0 flex-1 leading-snug">
+                      <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-200 truncate">${summaryTitle}</span>
+                      ${summarySubtitle ? html`
+                          <span class="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium truncate">${summarySubtitle}</span>
+                      ` : nothing}
+                  </div>
               </div>
               <div class="${twMerge(classes.detailsViewerClass, classes.nestedRailClass)}">
                   ${renderUIComponents(renderer, childComponents, classes, depth + 1, nextAncestors)}

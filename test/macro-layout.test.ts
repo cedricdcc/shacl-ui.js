@@ -142,5 +142,89 @@ describe("Macro layout & nested state management", () => {
     expect(avatar).not.toBeNull();
     expect(div.querySelector("button")).toBeNull();
   });
+
+  it("ignores blank node values and extracts meaningful child literal as summary title with subtitle", () => {
+    const renderer = new ShaclRenderer();
+    const classes = ShaclRenderer.DEFAULTS;
+    const uiComponent: any = {
+      uuid: "personnel-1",
+      label: "Onboard Personnel",
+      maxCount: 5,
+      minCount: 0,
+      paths: [{ path: "ex:personnel" }],
+      values: [
+        { path: { path: "ex:personnel" }, value: { termType: "BlankNode", value: "df_9_0" } }
+      ],
+      children: [
+        [
+          {
+            uuid: "role-1",
+            label: "Role",
+            paths: [{ path: "schema:role" }],
+            values: [{ path: { path: "schema:role" }, value: { termType: "BlankNode", value: "df_9_1" } }],
+            children: [
+              [
+                {
+                  uuid: "role-name-1",
+                  label: "Science Role",
+                  paths: [{ path: "schema:roleName" }],
+                  values: [{ path: { path: "schema:roleName" }, value: { termType: "Literal", value: "Chief Scientist" } }]
+                }
+              ]
+            ]
+          }
+        ]
+      ]
+    };
+
+    const template = renderDetailsEditor(renderer, uiComponent, uiComponent.values[0], 0, classes);
+    const div = document.createElement("div");
+    render(template, div);
+
+    expect(div.innerHTML).not.toContain("df_9_0");
+    expect(div.innerHTML).not.toContain("df_9_1");
+    expect(div.innerHTML).toContain("Chief Scientist");
+    expect(div.innerHTML).toContain("Onboard Personnel #1");
+
+    const avatar = div.querySelector(`.${classes.nestedSummaryAvatarClass.split(' ')[0]}`);
+    expect(avatar?.textContent?.trim()).toBe("CS");
+  });
+
+  it("falls back to friendly component label and index when only blank nodes exist", () => {
+    const renderer = new ShaclRenderer();
+    const classes = ShaclRenderer.DEFAULTS;
+    const uiComponent: any = {
+      uuid: "equip-1",
+      label: "Deployed Equipment",
+      maxCount: 5,
+      minCount: 0,
+      paths: [{ path: "ex:equipment" }],
+      values: [
+        { path: { path: "ex:equipment" }, value: { termType: "BlankNode", value: "df_9_5" } }
+      ],
+      children: [
+        [
+          {
+            uuid: "sensor-spec-1",
+            label: "Sensor Specification",
+            paths: [{ path: "ex:spec" }],
+            values: [{ path: { path: "ex:spec" }, value: { termType: "BlankNode", value: "df_9_6" } }],
+            children: [[]]
+          }
+        ]
+      ]
+    };
+
+    const template = renderDetailsEditor(renderer, uiComponent, uiComponent.values[0], 0, classes);
+    const div = document.createElement("div");
+    render(template, div);
+
+    expect(div.innerHTML).not.toContain("df_9_5");
+    expect(div.innerHTML).not.toContain("df_9_6");
+    expect(div.innerHTML).toContain("Deployed Equipment #1");
+
+    const avatar = div.querySelector(`.${classes.nestedSummaryAvatarClass.split(' ')[0]}`);
+    expect(avatar?.textContent?.trim()).toBe("D1");
+  });
 });
 

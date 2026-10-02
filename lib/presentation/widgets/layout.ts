@@ -141,35 +141,85 @@ export function renderRootSlots(
    depth: number = 0,
    ancestors: string[] = []
 ): TemplateResult {
+   type Chunk =
+      | { kind: 'components'; components: UIComponent[] }
+      | { kind: 'group'; slot: RootRenderSlot & { kind: 'group' } }
+      | { kind: 'orSection'; slot: RootRenderSlot & { kind: 'orSection' } };
+
+   const chunks: Chunk[] = [];
+   for (const slot of renderSlots) {
+      if (slot.kind === 'component') {
+         const lastChunk = chunks[chunks.length - 1];
+         if (lastChunk && lastChunk.kind === 'components') {
+            lastChunk.components.push(slot.component);
+         } else {
+            chunks.push({ kind: 'components', components: [slot.component] });
+         }
+      } else if (slot.kind === 'group') {
+         chunks.push({ kind: 'group', slot });
+      } else if (slot.kind === 'orSection') {
+         chunks.push({ kind: 'orSection', slot });
+      }
+   }
+
    return html`
-       ${renderSlots.map(slot => {
-           if (slot.kind === 'component') {
-               return renderUIComponent(renderer, slot.component, classes, depth, ancestors);
+       ${chunks.map(chunk => {
+           if (chunk.kind === 'components') {
+               return html`
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-7 mb-7">
+                       ${chunk.components.map(c => {
+                           const isFullWidth = chunk.components.length === 1
+                               || c.node != null
+                               || c.orNode != null
+                               || c.defaultWidget === shui('DetailsEditor')
+                               || c.defaultWidget === shui('DetailsViewer')
+                               || c.defaultWidget === shui('TextAreaEditor')
+                               || c.defaultWidget === shui('RichTextEditor')
+                               || c.defaultWidget === shui('ValueTableViewer');
+                           return html`
+                               <div class="${isFullWidth ? 'col-span-full' : 'col-span-1'}">
+                                   ${renderUIComponent(renderer, c, classes, depth, ancestors)}
+                               </div>
+                           `;
+                       })}
+                   </div>
+               `;
            }
 
-           if (slot.kind === 'group') {
-               const group = slot.components[0].group!;
+           if (chunk.kind === 'group') {
+               const { components } = chunk.slot;
+               const group = components[0].group!;
                return html`
                    <div class="${twMerge(classes.groupClass)}">
                        <h2 class="${twMerge(classes.groupLabelClass)}">${group.label}</h2>
-                       ${slot.components.map(c => html`
-                           <div class="${twMerge(classes.groupElementClass)}">
-                               ${renderUIComponent(renderer, c, classes, depth, ancestors)}
-                           </div>
-                       `)}
+                       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-7">
+                           ${components.map(c => {
+                               const isFullWidth = components.length === 1
+                                   || c.node != null
+                                   || c.orNode != null
+                                   || c.defaultWidget === shui('DetailsEditor')
+                                   || c.defaultWidget === shui('DetailsViewer')
+                                   || c.defaultWidget === shui('TextAreaEditor')
+                                   || c.defaultWidget === shui('RichTextEditor')
+                                   || c.defaultWidget === shui('ValueTableViewer');
+                               return html`
+                                   <div class="${isFullWidth ? 'col-span-full' : 'col-span-1'}">
+                                       ${renderUIComponent(renderer, c, classes, depth, ancestors)}
+                                   </div>
+                               `;
+                           })}
+                       </div>
                    </div>
                `;
            }
 
            // ── orSection ────────────────────────────────────────────────────
-           const {section, groupIndex} = slot;
+           const {section, groupIndex} = chunk.slot;
            const {group} = section;
 
-           // View mode is read-only: skip the variant selector and just show the
-           // selected option's fields.
            if (renderer.mode === 'view' || group.options.length < 2) {
                return section.components.length > 0
-                  ? renderUIComponents(renderer, section.components, classes, depth, ancestors)
+                  ? html`<div class="my-7">${renderUIComponents(renderer, section.components, classes, depth, ancestors)}</div>`
                   : nothing;
            }
 
@@ -178,7 +228,7 @@ export function renderRootSlots(
            const selected = group.options[group.selectedIndex];
 
            return html`
-               <div class="flex gap-3 mb-4">
+               <div class="flex gap-3 my-7">
                    <!-- Thin left accent bar that visually connects selector + fields -->
                    <div class="w-0.5 bg-zinc-200 dark:bg-zinc-700 rounded-full self-stretch shrink-0"></div>
 
@@ -261,7 +311,7 @@ export function renderUIComponents(
 
            if (!group) {
                return html`
-                   <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-7">
                        ${components.map(c => {
                            const isFullWidth = components.length === 1
                                || c.node != null
@@ -289,11 +339,23 @@ export function renderUIComponents(
                        </h2>
                    ` : nothing}
 
-                   ${components.map(c => html`
-                       <div class="${twMerge(classes.groupElementClass)}">
-                           ${renderUIComponent(renderer, c, classes, depth, ancestors)}
-                       </div>
-                   `)}
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-7">
+                       ${components.map(c => {
+                           const isFullWidth = components.length === 1
+                               || c.node != null
+                               || c.orNode != null
+                               || c.defaultWidget === shui('DetailsEditor')
+                               || c.defaultWidget === shui('DetailsViewer')
+                               || c.defaultWidget === shui('TextAreaEditor')
+                               || c.defaultWidget === shui('RichTextEditor')
+                               || c.defaultWidget === shui('ValueTableViewer');
+                           return html`
+                               <div class="${isFullWidth ? 'col-span-full' : 'col-span-1'}">
+                                   ${renderUIComponent(renderer, c, classes, depth, ancestors)}
+                               </div>
+                           `;
+                       })}
+                   </div>
                </div>
            `;
        })}
@@ -311,7 +373,7 @@ export function renderUIComponent(
       return renderUIComponentViewMode(renderer, uiComponent, classes, depth, ancestors);
    }
    return html`
-       <div class="mb-4">
+       <div class="mb-2">
            ${renderPlusIcon(renderer, uiComponent, classes)}
 
            ${renderLabel(uiComponent, classes)}
@@ -339,7 +401,7 @@ export function renderUIComponent(
                        ` : nothing}
                    </div>
 
-                   ${uiComponent.paths.length > 1 ? html`
+                   ${(uiComponent.paths?.length ?? 0) > 1 ? html`
                        <p class="${twMerge(classes.alternativePathDescriptionClass)}"
                           @click="${() => renderer.setAlternativePathSelectOpen(key, !open)}">
                            Click to choose an alternative path.

@@ -397,34 +397,79 @@ export function getDataType(uiComponent: UIComponent, value: UIComponentValue): 
    return uiComponent.datatype;
 }
 
-export function getSummaryLabelAndAvatar(uiComponent: UIComponent, childComponents: UIComponent[], index: number): { summaryTitle: string, avatarText: string } {
-   let summaryTitle = '';
-   for (const child of childComponents) {
-      for (const val of child.values ?? []) {
-         const raw = val?.value?.value;
-         if (raw && typeof raw === 'string' && !raw.startsWith('_:') && !raw.startsWith('http://') && !raw.startsWith('https://')) {
-            summaryTitle = raw.trim();
-            break;
+function findMeaningfulLiteral(components: UIComponent[]): string | undefined {
+   const priorityProps = ['name', 'label', 'title', 'role', 'code', 'serial', 'tag', 'identifier'];
+   for (const comp of components) {
+      const pathStr = comp.paths?.[0]?.path?.toLowerCase() || '';
+      const labelStr = comp.label?.toLowerCase() || '';
+      const isPriority = priorityProps.some(p => pathStr.includes(p) || labelStr.includes(p));
+      if (isPriority) {
+         for (const val of comp.values ?? []) {
+            if (val?.value && val.value.termType === 'Literal') {
+               const text = String(val.value.value).trim();
+               if (text.length > 0) return text;
+            }
          }
       }
-      if (summaryTitle) break;
-   }
-   if (!summaryTitle) {
-      summaryTitle = uiComponent.label ? `${uiComponent.label} #${index + 1}` : `Item #${index + 1}`;
    }
 
-   const clean = summaryTitle.replace(/[#_\-:]/g, ' ').trim();
+   for (const comp of components) {
+      for (const val of comp.values ?? []) {
+         if (val?.value && val.value.termType === 'Literal') {
+            const text = String(val.value.value).trim();
+            if (text.length > 0) return text;
+         }
+      }
+   }
+
+   for (const comp of components) {
+      if (comp.children) {
+         for (const childGroup of comp.children) {
+            const found = findMeaningfulLiteral(childGroup);
+            if (found) return found;
+         }
+      }
+   }
+
+   return undefined;
+}
+
+export function getSummaryLabelAndAvatar(
+   uiComponent: UIComponent,
+   childComponents: UIComponent[],
+   index: number
+): { summaryTitle: string, summarySubtitle?: string, avatarText: string } {
+   const itemLabel = uiComponent.label ? `${uiComponent.label} #${index + 1}` : `Item #${index + 1}`;
+   const literal = findMeaningfulLiteral(childComponents);
+
+   let summaryTitle: string;
+   let summarySubtitle: string | undefined;
+
+   if (literal) {
+      summaryTitle = literal;
+      summarySubtitle = itemLabel;
+   } else {
+      summaryTitle = itemLabel;
+      summarySubtitle = undefined;
+   }
+
+   const clean = summaryTitle.replace(/[^a-zA-Z0-9\s]/g, ' ').trim();
    const words = clean.split(/\s+/).filter(Boolean);
    let avatarText = '';
    if (words.length >= 2) {
-      avatarText = (words[0][0] + words[1][0]).toUpperCase();
+      if (/^\d+$/.test(words[words.length - 1])) {
+         avatarText = (words[0][0] + words[words.length - 1]).toUpperCase();
+      } else {
+         avatarText = (words[0][0] + words[1][0]).toUpperCase();
+      }
    } else if (words.length === 1 && words[0].length >= 2) {
       avatarText = words[0].slice(0, 2).toUpperCase();
    } else if (words.length === 1 && words[0].length === 1) {
       avatarText = words[0].toUpperCase();
    } else {
-      avatarText = `${index + 1}`;
+      avatarText = `#${index + 1}`;
    }
-   return { summaryTitle, avatarText };
+
+   return { summaryTitle, summarySubtitle, avatarText };
 }
 
