@@ -297,6 +297,10 @@ export class ShaclRenderer extends TwLitElement {
   @state()
   valueTablePage: Record<string, number> = {};
 
+  /** Tracks open/collapsed state of repeated nested items, keyed by `${uiComponent.uuid}-${index}` */
+  @state()
+  expandedNestedItems: Record<string, boolean> = {};
+
   createRenderRoot() {
     return this.useLightDom ? this : super.createRenderRoot();
   }
@@ -520,6 +524,21 @@ export class ShaclRenderer extends TwLitElement {
       return await serializeRdf(outputQuads, contentType);
     }
     return outputQuads;
+  }
+
+  isNestedItemExpanded(uuid: string, index: number, defaultOpen: boolean = false): boolean {
+    const key = `${uuid}-${index}`;
+    return this.expandedNestedItems[key] ?? defaultOpen;
+  }
+
+  toggleNestedItemExpanded(uuid: string, index: number, defaultOpen: boolean = false): void {
+    const key = `${uuid}-${index}`;
+    const current = this.isNestedItemExpanded(uuid, index, defaultOpen);
+    this.expandedNestedItems = {
+      ...this.expandedNestedItems,
+      [key]: !current
+    };
+    this.requestUpdate();
   }
 
   setAlternativePathSelectOpen(key: string, value: boolean) {
