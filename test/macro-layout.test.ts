@@ -3,6 +3,7 @@ import { render } from "lit";
 import { ShaclRenderer } from "../lib/shacl-renderer.ts";
 import { renderUIComponents } from "../lib/presentation/widgets/layout.ts";
 import { renderDetailsEditor } from "../lib/presentation/widgets/editors-rich-nested.ts";
+import { renderDetailsViewer } from "../lib/presentation/widgets/viewers-nested.ts";
 
 describe("Macro layout & nested state management", () => {
   it("manages accordion expansion per component uuid and item index", () => {
@@ -97,6 +98,49 @@ describe("Macro layout & nested state management", () => {
     template = renderDetailsEditor(renderer, uiComponent, uiComponent.values[1], 1, classes);
     render(template, div);
     expect(div.querySelector(".details-editor-rail")).not.toBeNull();
+  });
+
+  it("renders read-only nested shapes with matching guide rail and no edit affordances in view mode", () => {
+    const renderer = new ShaclRenderer();
+    renderer.mode = "view";
+    const classes = ShaclRenderer.DEFAULTS;
+    const uiComponent: any = {
+      uuid: "addr-1",
+      label: "Address",
+      maxCount: 1,
+      minCount: 1,
+      values: [{ path: { path: "ex:address" }, value: { value: "_:b1" } }],
+      children: [[]]
+    };
+    const template = renderDetailsViewer(renderer, uiComponent, uiComponent.values[0], 0, classes);
+    const div = document.createElement("div");
+    render(template, div);
+    expect(div.querySelector(".border-l-2")).not.toBeNull();
+    expect(div.querySelector("input")).toBeNull();
+    expect(div.querySelector("button")).toBeNull();
+  });
+
+  it("renders read-only repeated nested shapes with summary avatars in view mode", () => {
+    const renderer = new ShaclRenderer();
+    renderer.mode = "view";
+    const classes = ShaclRenderer.DEFAULTS;
+    const uiComponent: any = {
+      uuid: "affil-1",
+      label: "Affiliation",
+      maxCount: 5,
+      minCount: 0,
+      values: [
+        { path: { path: "ex:affiliation" }, value: { value: "_:b1" } },
+        { path: { path: "ex:affiliation" }, value: { value: "_:b2" } }
+      ],
+      children: [[], []]
+    };
+    const template = renderDetailsViewer(renderer, uiComponent, uiComponent.values[0], 0, classes);
+    const div = document.createElement("div");
+    render(template, div);
+    const avatar = div.querySelector(`.${classes.nestedSummaryAvatarClass.split(' ')[0]}`);
+    expect(avatar).not.toBeNull();
+    expect(div.querySelector("button")).toBeNull();
   });
 });
 

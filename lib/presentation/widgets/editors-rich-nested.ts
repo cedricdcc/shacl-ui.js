@@ -5,41 +5,10 @@ import {type TailwindClasses, type UIComponent, type UIComponentValue} from "../
 import {findTailwindMarginBottomValue} from "../tailwind.ts";
 import {mutateTerm} from "../../core/rdf.ts";
 import {ShaclRenderer} from "../../shacl-renderer.ts";
-import {sanitizeHtml, isSafeLinkUrl, renderXIcon, getHtmlLang, setHtmlLang} from "./shared.ts";
+import {sanitizeHtml, isSafeLinkUrl, renderXIcon, getHtmlLang, setHtmlLang, getSummaryLabelAndAvatar} from "./shared.ts";
 import {renderUIComponents} from "./layout.ts";
 import {renderDetailsClassSelect} from "./editors-select.ts";
 import {languageOptions} from "./editors-fields.ts";
-
-function getSummaryLabelAndAvatar(uiComponent: UIComponent, childComponents: UIComponent[], index: number): { summaryTitle: string, avatarText: string } {
-   let summaryTitle = '';
-   for (const child of childComponents) {
-      for (const val of child.values ?? []) {
-         const raw = val?.value?.value;
-         if (raw && typeof raw === 'string' && !raw.startsWith('_:') && !raw.startsWith('http://') && !raw.startsWith('https://')) {
-            summaryTitle = raw.trim();
-            break;
-         }
-      }
-      if (summaryTitle) break;
-   }
-   if (!summaryTitle) {
-      summaryTitle = uiComponent.label ? `${uiComponent.label} #${index + 1}` : `Item #${index + 1}`;
-   }
-
-   const clean = summaryTitle.replace(/[#_\-:]/g, ' ').trim();
-   const words = clean.split(/\s+/).filter(Boolean);
-   let avatarText = '';
-   if (words.length >= 2) {
-      avatarText = (words[0][0] + words[1][0]).toUpperCase();
-   } else if (words.length === 1 && words[0].length >= 2) {
-      avatarText = words[0].slice(0, 2).toUpperCase();
-   } else if (words.length === 1 && words[0].length === 1) {
-      avatarText = words[0].toUpperCase();
-   } else {
-      avatarText = `${index + 1}`;
-   }
-   return { summaryTitle, avatarText };
-}
 
 export function renderDetailsEditor(
    renderer: ShaclRenderer,

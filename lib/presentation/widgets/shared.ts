@@ -396,3 +396,35 @@ export function getDataType(uiComponent: UIComponent, value: UIComponentValue): 
    }
    return uiComponent.datatype;
 }
+
+export function getSummaryLabelAndAvatar(uiComponent: UIComponent, childComponents: UIComponent[], index: number): { summaryTitle: string, avatarText: string } {
+   let summaryTitle = '';
+   for (const child of childComponents) {
+      for (const val of child.values ?? []) {
+         const raw = val?.value?.value;
+         if (raw && typeof raw === 'string' && !raw.startsWith('_:') && !raw.startsWith('http://') && !raw.startsWith('https://')) {
+            summaryTitle = raw.trim();
+            break;
+         }
+      }
+      if (summaryTitle) break;
+   }
+   if (!summaryTitle) {
+      summaryTitle = uiComponent.label ? `${uiComponent.label} #${index + 1}` : `Item #${index + 1}`;
+   }
+
+   const clean = summaryTitle.replace(/[#_\-:]/g, ' ').trim();
+   const words = clean.split(/\s+/).filter(Boolean);
+   let avatarText = '';
+   if (words.length >= 2) {
+      avatarText = (words[0][0] + words[1][0]).toUpperCase();
+   } else if (words.length === 1 && words[0].length >= 2) {
+      avatarText = words[0].slice(0, 2).toUpperCase();
+   } else if (words.length === 1 && words[0].length === 1) {
+      avatarText = words[0].toUpperCase();
+   } else {
+      avatarText = `${index + 1}`;
+   }
+   return { summaryTitle, avatarText };
+}
+
