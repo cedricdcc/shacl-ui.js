@@ -184,6 +184,7 @@ export function renderPlusIcon(renderer: ShaclRenderer, uiComponent: UIComponent
          selectedOrIndex: uiComponent.selectedOrIndex,
       });
       renderer.addToDataStore(uiComponent.focusNode, path, value);
+      renderer.expandNestedItem(uiComponent.uuid, uiComponent.values.length - 1);
       renderer.rerender();
    }
 

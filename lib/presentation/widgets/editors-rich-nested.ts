@@ -10,6 +10,37 @@ import {renderUIComponents} from "./layout.ts";
 import {renderDetailsClassSelect} from "./editors-select.ts";
 import {languageOptions} from "./editors-fields.ts";
 
+function getSummaryLabelAndAvatar(uiComponent: UIComponent, childComponents: UIComponent[], index: number): { summaryTitle: string, avatarText: string } {
+   let summaryTitle = '';
+   for (const child of childComponents) {
+      for (const val of child.values ?? []) {
+         const raw = val?.value?.value;
+         if (raw && typeof raw === 'string' && !raw.startsWith('_:') && !raw.startsWith('http://') && !raw.startsWith('https://')) {
+            summaryTitle = raw.trim();
+            break;
+         }
+      }
+      if (summaryTitle) break;
+   }
+   if (!summaryTitle) {
+      summaryTitle = uiComponent.label ? `${uiComponent.label} #${index + 1}` : `Item #${index + 1}`;
+   }
+
+   const clean = summaryTitle.replace(/[#_\-:]/g, ' ').trim();
+   const words = clean.split(/\s+/).filter(Boolean);
+   let avatarText = '';
+   if (words.length >= 2) {
+      avatarText = (words[0][0] + words[1][0]).toUpperCase();
+   } else if (words.length === 1 && words[0].length >= 2) {
+      avatarText = words[0].slice(0, 2).toUpperCase();
+   } else if (words.length === 1 && words[0].length === 1) {
+      avatarText = words[0].toUpperCase();
+   } else {
+      avatarText = `${index + 1}`;
+   }
+   return { summaryTitle, avatarText };
+}
+
 export function renderDetailsEditor(
    renderer: ShaclRenderer,
    uiComponent: UIComponent,
@@ -24,28 +55,71 @@ export function renderDetailsEditor(
    const nextAncestors = uiComponent.label ? [...ancestors, uiComponent.label] : ancestors;
    const canRemove = (uiComponent.node ? (uiComponent.children?.length ?? 0) : uiComponent.values.length) > (uiComponent.minCount || 0);
    const isMultiple = (uiComponent.maxCount ?? 2) > 1 || uiComponent.values.length > 1;
-   const showHeader = isMultiple || canRemove;
-   const itemLabel = uiComponent.label
-      ? (isMultiple ? `${uiComponent.label} #${index + 1}` : uiComponent.label)
-      : `Item #${index + 1}`;
+   const itemLabel = uiComponent.label || `Item #${index + 1}`;
+
+   if (!isMultiple) {
+      return html`
+          <div class="${twMerge(classes.detailsEditorClass, classes.nestedRailClass)}">
+              <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-1.5">
+                      <div class="${twMerge(classes.nestedHeaderPipClass)}"></div>
+                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-100">${itemLabel}</h3>
+                      ${uiComponent.description ? html`<span class="text-xs text-zinc-400">· ${uiComponent.description}</span>` : nothing}
+                  </div>
+                  ${disabled || !canRemove ? nothing : html`
+                      <button type="button"
+                              title="Remove ${itemLabel}"
+                              aria-label="Remove item"
+                              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 dark:hover:text-red-400 transition-all cursor-pointer border border-transparent hover:border-red-200 dark:hover:border-red-900/50"
+                              @click="${() => {
+                                  uiComponent.children?.splice(index, 1);
+                                  renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value, childComponents);
+                                  uiComponent.values.splice(index, 1);
+                                  renderer.rerender();
+                              }}">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                          </svg>
+                          <span>Remove</span>
+                      </button>
+                  `}
+              </div>
+
+              ${uiComponent.classes && uiComponent.classes.length > 1 ? renderDetailsClassSelect(renderer, uiComponent, value, index, classes) : nothing}
+
+              ${renderUIComponents(renderer, childComponents, classes, depth + 1, nextAncestors)}
+          </div>
+      `;
+   }
+
+   const defaultOpen = index === 0;
+   const isExpanded = renderer.isNestedItemExpanded(uiComponent.uuid, index, defaultOpen);
+   const { summaryTitle, avatarText } = getSummaryLabelAndAvatar(uiComponent, childComponents, index);
 
    return html`
-       <div class="${twMerge(classes.detailsEditorClass)}">
-           ${showHeader ? html`
-               <div class="flex items-center justify-between px-5 py-3 border-b border-zinc-200/80 dark:border-zinc-700/80 bg-zinc-50/80 dark:bg-zinc-800/80">
-                   <div class="inline-flex items-center gap-2">
-                       <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-600 shadow-2xs">
-                           <span class="w-2 h-2 rounded-full bg-indigo-500 dark:bg-indigo-400"></span>
-                           ${itemLabel}
-                       </span>
+       <div class="mb-2">
+           <div class="${twMerge(classes.nestedSummaryRowClass, 'group')}"
+                @click="${() => {
+                    renderer.toggleNestedItemExpanded(uiComponent.uuid, index, defaultOpen);
+                }}">
+               <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                   <div class="${twMerge(classes.nestedSummaryAvatarClass)}">
+                       ${avatarText}
                    </div>
+                   <div class="flex flex-col min-w-0 flex-1">
+                       <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-200 truncate">${summaryTitle}</span>
+                   </div>
+               </div>
+
+               <div class="flex items-center gap-1 shrink-0 ml-2">
                    ${disabled || !canRemove ? nothing : html`
                        <button type="button"
-                               title="Remove ${itemLabel}"
+                               title="Remove ${summaryTitle}"
                                aria-label="Remove item"
-                               class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 dark:hover:text-red-400 transition-all cursor-pointer border border-transparent hover:border-red-200 dark:hover:border-red-900/50"
-                               @click="${() => {
-                                   uiComponent.children!.splice(index, 1);
+                               class="inline-flex items-center p-1 rounded-md text-xs font-medium text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 dark:hover:text-red-400 transition-all cursor-pointer border border-transparent hover:border-red-200 dark:hover:border-red-900/50"
+                               @click="${(e: MouseEvent) => {
+                                   e.stopPropagation();
+                                   uiComponent.children?.splice(index, 1);
                                    renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value, childComponents);
                                    uiComponent.values.splice(index, 1);
                                    renderer.rerender();
@@ -53,17 +127,23 @@ export function renderDetailsEditor(
                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-3.5">
                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
                            </svg>
-                           <span>Remove</span>
                        </button>
                    `}
+
+                   <div class="p-1 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-200 transition-transform ${isExpanded ? 'rotate-180' : ''}">
+                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-4">
+                           <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                       </svg>
+                   </div>
+               </div>
+           </div>
+
+           ${isExpanded ? html`
+               <div class="${twMerge(classes.detailsEditorClass, classes.nestedRailClass, 'mt-2 mb-3')}">
+                   ${uiComponent.classes && uiComponent.classes.length > 1 ? renderDetailsClassSelect(renderer, uiComponent, value, index, classes) : nothing}
+                   ${renderUIComponents(renderer, childComponents, classes, depth + 1, nextAncestors)}
                </div>
            ` : nothing}
-
-           <div class="p-5 md:p-6">
-               ${uiComponent.classes && uiComponent.classes.length > 1 ? renderDetailsClassSelect(renderer, uiComponent, value, index, classes) : nothing}
-
-               ${renderUIComponents(renderer, childComponents, classes, depth + 1, nextAncestors)}
-           </div>
        </div>
    `;
 }

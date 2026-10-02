@@ -541,6 +541,15 @@ export class ShaclRenderer extends TwLitElement {
     this.requestUpdate();
   }
 
+  expandNestedItem(uuid: string, index: number): void {
+    const key = `${uuid}-${index}`;
+    this.expandedNestedItems = {
+      ...this.expandedNestedItems,
+      [key]: true
+    };
+    this.requestUpdate();
+  }
+
   setAlternativePathSelectOpen(key: string, value: boolean) {
     this.alternativePathSelectOpen = {
       ...this.alternativePathSelectOpen,
