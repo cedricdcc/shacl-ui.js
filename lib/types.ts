@@ -182,6 +182,11 @@ export type TailwindClasses = {
    enumSelectEditorIconClass?: string;
    iriEditorClass?: string;
    detailsEditorClass?: string;
+   nestedRailClass?: string;
+   nestedHeaderPipClass?: string;
+   nestedSummaryRowClass?: string;
+   nestedSummaryAvatarClass?: string;
+   nestedBreadcrumbClass?: string;
    plusIconClass?: string;
    xIconClass?: string;
    groupClass?: string;
