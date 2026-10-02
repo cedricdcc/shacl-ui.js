@@ -38,4 +38,14 @@ describe("styling slots (single source of truth)", () => {
       expect(ShaclRenderer.DEFAULTS.iriViewerClass).toContain("dark:text-blue-400");
       expect(ShaclRenderer.DEFAULTS.valueTableViewerHeaderClass).toContain("dark:");
    });
+
+   it("defines the new macro layout and nested styling slots with expected defaults", () => {
+      expect(ShaclRenderer.DEFAULTS).toHaveProperty("nestedRailClass");
+      expect(ShaclRenderer.DEFAULTS).toHaveProperty("nestedSummaryRowClass");
+      expect(ShaclRenderer.DEFAULTS).toHaveProperty("nestedSummaryAvatarClass");
+      expect(ShaclRenderer.DEFAULTS).toHaveProperty("nestedBreadcrumbClass");
+      expect(ShaclRenderer.DEFAULTS).toHaveProperty("nestedHeaderPipClass");
+      expect(ShaclRenderer.DEFAULTS.detailsEditorClass).toContain("details-editor-rail");
+      expect(ShaclRenderer.DEFAULTS.detailsEditorClass).not.toContain("details-editor-card");
+   });
 });
