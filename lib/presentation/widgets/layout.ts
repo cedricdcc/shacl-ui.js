@@ -372,13 +372,15 @@ export function renderUIComponent(
    if (renderer.mode === 'view') {
       return renderUIComponentViewMode(renderer, uiComponent, classes, depth, ancestors);
    }
+   const isSingleNested = (uiComponent.defaultWidget === shui('DetailsEditor') || uiComponent.values[0]?.selectedWidget === shui('DetailsEditor')) && ((uiComponent.maxCount ?? 2) <= 1 && uiComponent.values.length <= 1);
+
    return html`
        <div class="mb-2">
            ${renderPlusIcon(renderer, uiComponent, classes)}
 
-           ${renderLabel(uiComponent, classes)}
+           ${isSingleNested ? nothing : renderLabel(uiComponent, classes)}
 
-           ${renderDescription(uiComponent, classes)}
+           ${isSingleNested ? nothing : renderDescription(uiComponent, classes)}
 
            ${uiComponent.values.map((value, index) => {
                const key = `${uiComponent.uuid}-${uiComponent.focusNode?.value}-${value.path.path}-${index}`;
@@ -390,7 +392,7 @@ export function renderUIComponent(
 
                    <div class="flex items-start gap-2">
                        <div class="flex-1 min-w-0">
-                           ${isHasValue ? nothing : renderOrSelectorForValue(renderer, uiComponent, value, index, classes)}
+                           ${isHasValue || isSingleNested ? nothing : renderOrSelectorForValue(renderer, uiComponent, value, index, classes)}
                            ${renderEditor(renderer, uiComponent, value, index, classes, isHasValue, depth, ancestors)}
                        </div>
 

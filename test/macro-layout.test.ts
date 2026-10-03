@@ -27,7 +27,7 @@ describe("Macro layout & nested state management", () => {
     expect(div.innerHTML).toContain("Project › WorkPackage 1");
   });
 
-  it("renders 1:1 nested shape with dissolved guide rail and accent pip header", () => {
+  it("renders 1:1 nested shape dissolved into parent grid without left guide rail", () => {
     const renderer = new ShaclRenderer();
     const classes = ShaclRenderer.DEFAULTS;
     const uiComponent: any = {
@@ -42,9 +42,11 @@ describe("Macro layout & nested state management", () => {
     const template = renderDetailsEditor(renderer, uiComponent, uiComponent.values[0], 0, classes);
     const div = document.createElement("div");
     render(template, div);
-    expect(div.innerHTML).toContain("Address");
-    expect(div.querySelector(".details-editor-rail")).not.toBeNull();
+    expect(div.textContent).toContain("↳ Address");
+    expect(div.querySelector(".border-l-2")).toBeNull();
+    expect(div.querySelector(".pl-5")).toBeNull();
     expect(div.querySelector(".details-editor-card")).toBeNull();
+    expect(div.querySelector(`.${classes.nestedSectionDividerClass.split(' ')[0]}`)).not.toBeNull();
   });
 
   it("renders 1:N repeated shapes as summary rows with avatar chips and expand toggle", () => {
@@ -88,7 +90,7 @@ describe("Macro layout & nested state management", () => {
     let template = renderDetailsEditor(renderer, uiComponent, uiComponent.values[1], 1, classes);
     const div = document.createElement("div");
     render(template, div);
-    expect(div.querySelector(".details-editor-rail")).toBeNull();
+    expect(div.querySelector(".col-span-full")).toBeNull();
 
     // Click to expand
     const summaryRow = div.querySelector(`.${classes.nestedSummaryRowClass.split(' ')[0]}`) as HTMLElement;
@@ -97,7 +99,7 @@ describe("Macro layout & nested state management", () => {
     // Re-render template with new state
     template = renderDetailsEditor(renderer, uiComponent, uiComponent.values[1], 1, classes);
     render(template, div);
-    expect(div.querySelector(".details-editor-rail")).not.toBeNull();
+    expect(div.querySelector(".col-span-full")).not.toBeNull();
   });
 
   it("renders read-only nested shapes with matching guide rail and no edit affordances in view mode", () => {

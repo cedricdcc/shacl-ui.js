@@ -5,7 +5,7 @@ import {type TailwindClasses, type UIComponent, type UIComponentValue} from "../
 import {findTailwindMarginBottomValue} from "../tailwind.ts";
 import {mutateTerm} from "../../core/rdf.ts";
 import {ShaclRenderer} from "../../shacl-renderer.ts";
-import {sanitizeHtml, isSafeLinkUrl, renderXIcon, getHtmlLang, setHtmlLang, getSummaryLabelAndAvatar} from "./shared.ts";
+import {sanitizeHtml, isSafeLinkUrl, renderXIcon, getHtmlLang, setHtmlLang, getSummaryLabelAndAvatar, renderOrSelectorForValue} from "./shared.ts";
 import {renderUIComponents} from "./layout.ts";
 import {renderDetailsClassSelect} from "./editors-select.ts";
 import {languageOptions} from "./editors-fields.ts";
@@ -29,11 +29,14 @@ export function renderDetailsEditor(
    if (!isMultiple) {
       return html`
           <div class="${twMerge(classes.detailsEditorClass, classes.nestedRailClass)}">
-              <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center gap-1.5">
-                      <div class="${twMerge(classes.nestedHeaderPipClass)}"></div>
-                      <h3 class="text-sm font-semibold text-zinc-800 dark:text-zinc-100">${itemLabel}</h3>
-                      ${uiComponent.description ? html`<span class="text-xs text-zinc-400">· ${uiComponent.description}</span>` : nothing}
+              <div class="${twMerge(classes.nestedSectionDividerClass)}">
+                  <div class="flex items-center gap-2 min-w-0 flex-wrap">
+                      <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 truncate">
+                          ↳ ${itemLabel}
+                      </span>
+                      ${uiComponent.description ? html`<span class="text-xs text-zinc-400 truncate">· ${uiComponent.description}</span>` : nothing}
+                      ${renderOrSelectorForValue(renderer, uiComponent, value, index, classes)}
+                      ${uiComponent.classes && uiComponent.classes.length > 1 ? renderDetailsClassSelect(renderer, uiComponent, value, index, classes) : nothing}
                   </div>
                   ${disabled || !canRemove ? nothing : html`
                       <button type="button"
@@ -53,8 +56,6 @@ export function renderDetailsEditor(
                       </button>
                   `}
               </div>
-
-              ${uiComponent.classes && uiComponent.classes.length > 1 ? renderDetailsClassSelect(renderer, uiComponent, value, index, classes) : nothing}
 
               ${renderUIComponents(renderer, childComponents, classes, depth + 1, nextAncestors)}
           </div>
