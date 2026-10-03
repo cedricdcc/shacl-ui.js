@@ -18,13 +18,14 @@ describe("Macro layout & nested state management", () => {
     expect(renderer.isNestedItemExpanded("comp-1", 1, false)).toBe(false);
   });
 
-  it("renders breadcrumb depth cap at depth >= 2 with ancestor path", () => {
+  it("does not render textual breadcrumb trail for nested shapes", () => {
     const renderer = new ShaclRenderer();
     const classes = ShaclRenderer.DEFAULTS;
     const template = renderUIComponents(renderer, [], classes, 2, ["Project", "WorkPackage 1"]);
     const div = document.createElement("div");
     render(template, div);
-    expect(div.innerHTML).toContain("Project › WorkPackage 1");
+    expect(div.innerHTML).not.toContain("Project › WorkPackage 1");
+    expect(div.querySelector(`.${classes.nestedBreadcrumbClass.split(' ')[0]}`)).toBeNull();
   });
 
   it("renders 1:1 nested shape dissolved into parent grid without left guide rail", () => {
@@ -102,7 +103,7 @@ describe("Macro layout & nested state management", () => {
     expect(div.querySelector(".col-span-full")).not.toBeNull();
   });
 
-  it("renders read-only nested shapes with matching guide rail and no edit affordances in view mode", () => {
+  it("renders read-only nested shapes without guide rails and with unified section divider in view mode", () => {
     const renderer = new ShaclRenderer();
     renderer.mode = "view";
     const classes = ShaclRenderer.DEFAULTS;
@@ -117,7 +118,8 @@ describe("Macro layout & nested state management", () => {
     const template = renderDetailsViewer(renderer, uiComponent, uiComponent.values[0], 0, classes);
     const div = document.createElement("div");
     render(template, div);
-    expect(div.querySelector(".border-l-2")).not.toBeNull();
+    expect(div.querySelector(".border-l-2")).toBeNull();
+    expect(div.textContent).toContain("↳ Address");
     expect(div.querySelector("input")).toBeNull();
     expect(div.querySelector("button")).toBeNull();
   });

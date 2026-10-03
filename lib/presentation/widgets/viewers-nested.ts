@@ -46,8 +46,17 @@ export function renderDetailsViewer(
       `;
    }
 
+   const itemLabel = uiComponent.label || `Item #${index + 1}`;
    return html`
        <div class="${twMerge(classes.detailsViewerClass, classes.nestedRailClass)}">
+           <div class="${twMerge(classes.nestedSectionDividerClass)}">
+               <div class="flex items-center gap-2 min-w-0 flex-wrap">
+                   <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 truncate">
+                       ↳ ${itemLabel}
+                   </span>
+                   ${uiComponent.description ? html`<span class="text-xs text-zinc-400 truncate">· ${uiComponent.description}</span>` : nothing}
+               </div>
+           </div>
            ${renderUIComponents(renderer, childComponents, classes, depth + 1, nextAncestors)}
        </div>
    `;

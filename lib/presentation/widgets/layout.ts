@@ -301,11 +301,6 @@ export function renderUIComponents(
    }
 
    return html`
-       ${depth >= 2 && ancestors.length > 0 ? html`
-           <div class="${twMerge(classes.nestedBreadcrumbClass)}">
-               <span>${ancestors.join(' › ')}</span>
-           </div>
-       ` : nothing}
        ${Array.from(grouped.entries()).map(([_, components]) => {
            const group = components[0].group;
 
@@ -550,7 +545,8 @@ function renderUIComponentViewMode(
    depth: number = 0,
    ancestors: string[] = []
 ) {
-   const header = html`
+   const isSingleNested = (uiComponent.defaultWidget === shui("DetailsViewer") || uiComponent.values[0]?.selectedWidget === shui("DetailsViewer")) && ((uiComponent.maxCount ?? 2) <= 1 && uiComponent.values.length <= 1);
+   const header = isSingleNested ? nothing : html`
        ${uiComponent.label ? html`<div class="${twMerge(classes.viewerLabelClass)}">${uiComponent.label}</div>` : nothing}
        ${uiComponent.description ? html`<p class="${twMerge(classes.viewerDescriptionClass)}">${uiComponent.description}</p>` : nothing}
    `;

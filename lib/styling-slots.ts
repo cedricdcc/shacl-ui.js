@@ -110,7 +110,7 @@ export const STYLING_SLOTS = {
    imageViewerClass: 'max-w-full h-auto max-h-64 rounded border border-zinc-200 dark:border-zinc-700 object-contain',
    htmlViewerClass: 'prose prose-zinc dark:prose-invert max-w-none text-zinc-800 dark:text-zinc-100',
    blankNodeViewerClass: 'italic text-zinc-600 dark:text-zinc-300 break-words',
-   detailsViewerClass: 'my-2 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700/80',
+   detailsViewerClass: 'col-span-full my-3 relative',
    valueTableViewerClass: 'w-full overflow-auto max-h-96 border border-zinc-200 dark:border-zinc-700 rounded-md',
    valueTableViewerHeaderClass: 'sticky top-0 bg-zinc-50 dark:bg-zinc-900 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300 px-3 py-2 border-b border-zinc-200 dark:border-zinc-700',
    valueTableViewerRowClass: 'border-b border-zinc-100 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-700/40',
