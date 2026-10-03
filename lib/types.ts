@@ -183,6 +183,8 @@ export type TailwindClasses = {
    iriEditorClass?: string;
    detailsEditorClass?: string;
    nestedRailClass?: string;
+   nestedSectionDividerClass?: string;
+   nestedVariantBadgeClass?: string;
    nestedHeaderPipClass?: string;
    nestedSummaryRowClass?: string;
    nestedSummaryAvatarClass?: string;

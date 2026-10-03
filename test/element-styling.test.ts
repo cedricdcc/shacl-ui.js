@@ -45,7 +45,13 @@ describe("styling slots (single source of truth)", () => {
       expect(ShaclRenderer.DEFAULTS).toHaveProperty("nestedSummaryAvatarClass");
       expect(ShaclRenderer.DEFAULTS).toHaveProperty("nestedBreadcrumbClass");
       expect(ShaclRenderer.DEFAULTS).toHaveProperty("nestedHeaderPipClass");
-      expect(ShaclRenderer.DEFAULTS.detailsEditorClass).toContain("details-editor-rail");
-      expect(ShaclRenderer.DEFAULTS.detailsEditorClass).not.toContain("details-editor-card");
+   });
+
+   it("defines edge-grid nested styling slots without border-l-2 staircase", () => {
+      expect(ShaclRenderer.DEFAULTS).toHaveProperty("nestedSectionDividerClass");
+      expect(ShaclRenderer.DEFAULTS).toHaveProperty("nestedVariantBadgeClass");
+      expect(ShaclRenderer.DEFAULTS.detailsEditorClass).not.toContain("border-l-2");
+      expect(ShaclRenderer.DEFAULTS.detailsEditorClass).toContain("col-span-full");
+      expect(ShaclRenderer.DEFAULTS.nestedRailClass).not.toContain("border-l-2");
    });
 });
