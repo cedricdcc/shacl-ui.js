@@ -1,6 +1,7 @@
 import type {Term} from "@rdfjs/types";
 import type {TemplateResult} from "lit";
 import type {ShaclRenderer} from "./shacl-renderer.ts";
+import type {DetailedViolation} from "./core/validation.ts";
 
 export type UIComponent = {
    uuid: string;
@@ -280,6 +281,14 @@ export interface CustomWidgetRenderContext {
    mode: 'edit' | 'view';
    annotations: Record<string, string>;
    onValueChange: (newTerm: Term | null) => void;
+
+   // ── Validation & Fault Properties ──
+   /** Active SHACL violations matching this specific value / property path */
+   violations?: DetailedViolation[];
+   /** Convenience flag indicating whether any violations exist on this field */
+   hasError?: boolean;
+   /** Indicates if the current value is empty/unselected (null, undefined, or empty string) */
+   isEmpty?: boolean;
 }
 
 export interface CustomWidgetMountContext extends CustomWidgetRenderContext {

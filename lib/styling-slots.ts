@@ -123,6 +123,7 @@ export const STYLING_SLOTS = {
    fieldErrorMessageClass: 'mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1.5 font-medium',
    nestedSummaryErrorBadgeClass: 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400 border border-red-200 dark:border-red-900/50',
    nestedSummaryErrorRowClass: 'border-red-300 dark:border-red-800/80 bg-red-50/20 dark:bg-red-950/10',
+   customWidgetErrorClass: 'ring-1 ring-red-500/80 dark:ring-red-500/80 rounded-md p-0.5 transition-shadow',
 } as const;
 
 /** Names of every styling slot. */

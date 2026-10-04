@@ -64,6 +64,14 @@ describe("styling slots (single source of truth)", () => {
       expect(ShaclRenderer.DEFAULTS.nestedSummaryErrorBadgeClass).toContain("text-red-700");
       expect(ShaclRenderer.DEFAULTS).toHaveProperty("nestedSummaryErrorRowClass");
       expect(ShaclRenderer.DEFAULTS.nestedSummaryErrorRowClass).toContain("border-red-300");
+      expect(ShaclRenderer.DEFAULTS).toHaveProperty("customWidgetErrorClass");
+      expect(ShaclRenderer.DEFAULTS.customWidgetErrorClass).toContain("ring-red-500");
+   });
+
+   it("supports customWidgetErrorClass styling slot override", () => {
+      const el = new ShaclRenderer();
+      el.customWidgetErrorClass = 'custom-error-ring';
+      expect(el.customWidgetErrorClass).toBe('custom-error-ring');
    });
 });
 
