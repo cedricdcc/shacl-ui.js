@@ -11,6 +11,7 @@ import {cloneUiComponent} from "./core/clone.ts";
 import {rdf, xsd, SH, RDF as RDF_} from "./core/namespaces.ts";
 import {type LabelResolutionConfig, resolvePreferredLanguages} from "./core/labels.ts";
 import {toValueNodeLabel} from "./core/labels.ts";
+import {validateDataset, type DetailedValidationReport} from "./core/validation.ts";
 import {renderRootSlots, addChildrenToDataStore, getCustomScoringTtls} from "./presentation/widgets.ts";
 import type {Path, RootOrGroup, RootRenderSlot, TailwindClasses, UIComponent, UIComponentValue} from "./types.ts";
 import {STYLING_SLOT_NAMES, STYLING_SLOTS} from "./styling-slots.ts";
@@ -106,6 +107,33 @@ export class ShaclRenderer extends TwLitElement {
    */
   @property({ reflect: true })
   mode: 'edit' | 'view' = 'edit';
+
+  /**
+   * Validation trigger mode:
+   * - 'manual': validation only runs when renderer.validate() is called.
+   * - 'change': validation runs automatically (debounced) whenever the data graph changes.
+   * - 'blur': validation runs when a field loses focus.
+   */
+  @property({ type: String, attribute: 'validate-on' })
+  validateOn: 'manual' | 'change' | 'blur' = 'manual';
+
+  /**
+   * Debounce delay (in ms) for live validation when validateOn is 'change' or 'blur'.
+   */
+  @property({ type: Number, attribute: 'debounce-ms' })
+  debounceMs: number = 300;
+
+  /**
+   * Whether to automatically expand collapsed nested items when they contain validation violations.
+   */
+  @property({ type: Boolean, attribute: 'auto-expand-invalid' })
+  autoExpandInvalid: boolean = true;
+
+  /**
+   * Current detailed validation report, or null if validation has not run or was cleared.
+   */
+  @state()
+  validationReport: DetailedValidationReport | null = null;
 
   @property({type: Boolean})
   dereferenceForLabelResolution: boolean = false;
@@ -356,7 +384,12 @@ export class ShaclRenderer extends TwLitElement {
     const tailwindClasses = this.mergedClasses ??= this.computeMergedClasses();
     const renderer = this;
     return html`
-      <div class="${tailwindClasses.componentClass}">
+      <div class="${tailwindClasses.componentClass}"
+           @focusout="${() => {
+             if (this.validateOn === 'blur') {
+               this.triggerDebouncedValidation();
+             }
+           }}">
         ${this.error
            ? html`
              <div class="text-red-600 dark:text-red-400 p-4" role="alert">
@@ -550,6 +583,116 @@ export class ShaclRenderer extends TwLitElement {
     this.requestUpdate();
   }
 
+  private validationDebounceTimer: any = null;
+
+  triggerDebouncedValidation(): void {
+    if (this.validationDebounceTimer) {
+      clearTimeout(this.validationDebounceTimer);
+    }
+    this.validationDebounceTimer = setTimeout(() => {
+      this.validate().catch(err => console.error('shacl-renderer validation error:', err));
+    }, this.debounceMs);
+  }
+
+  /**
+   * Validates the current data graph against the shapes graph using SHACL validation.
+   * Unpacks violations across nested structures with exact focus nodes, breadcrumbs,
+   * and constraint details, then updates `validationReport` and dispatches `shacl-validation`.
+   */
+  async validate(): Promise<DetailedValidationReport> {
+    if (!this.shapesStore || !this.dataStore) {
+      const emptyReport: DetailedValidationReport = {
+        conforms: true,
+        violations: [],
+        violationMap: new Map(),
+        focusNodeViolationCount: new Map()
+      };
+      this.validationReport = emptyReport;
+      return emptyReport;
+    }
+
+    const report = await validateDataset(this.shapesStore, this.dataStore);
+    this.validationReport = report;
+
+    if (this.autoExpandInvalid && report.violations.length > 0) {
+      const violationFocusNodes = new Set<string>();
+      for (const v of report.violations) {
+        if (v.focusNode) violationFocusNodes.add(v.focusNode);
+        if (v.parentFocusNode) violationFocusNodes.add(v.parentFocusNode);
+      }
+      this.autoExpandComponentsWithViolations(this.ui, violationFocusNodes);
+    }
+
+    this.dispatchEvent(new CustomEvent('shacl-validation', {
+      bubbles: true,
+      composed: true,
+      detail: {
+        conforms: report.conforms,
+        report
+      }
+    }));
+
+    this.requestUpdate();
+    return report;
+  }
+
+  private autoExpandComponentsWithViolations(components: UIComponent[], violationFocusNodes: Set<string>): void {
+    if (!components) return;
+    for (const comp of components) {
+      if (comp.children && comp.children.length > 0) {
+        for (let idx = 0; idx < comp.children.length; idx++) {
+          const childList = comp.children[idx] ?? [];
+          const val = comp.values[idx];
+          const itemFocusNode = val?.value?.value;
+
+          const branchHasViolation = this.doesBranchHaveViolation(childList, itemFocusNode, violationFocusNodes);
+          if (branchHasViolation) {
+            this.expandNestedItem(comp.uuid, idx);
+            this.autoExpandComponentsWithViolations(childList, violationFocusNodes);
+          }
+        }
+      }
+    }
+  }
+
+  private doesBranchHaveViolation(children: UIComponent[], itemFocusNode: string | undefined, violationFocusNodes: Set<string>): boolean {
+    if (itemFocusNode && violationFocusNodes.has(itemFocusNode)) {
+      return true;
+    }
+    if (!children) return false;
+    for (const child of children) {
+      if (child.focusNode && violationFocusNodes.has(child.focusNode.value)) {
+        return true;
+      }
+      if (child.children && child.children.length > 0) {
+        for (let i = 0; i < child.children.length; i++) {
+          const subChildren = child.children[i] ?? [];
+          const subVal = child.values[i];
+          if (this.doesBranchHaveViolation(subChildren, subVal?.value?.value, violationFocusNodes)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Clears the current validation report and error displays, and dispatches `shacl-validation-cleared`.
+   */
+  clearValidation(): void {
+    if (this.validationDebounceTimer) {
+      clearTimeout(this.validationDebounceTimer);
+      this.validationDebounceTimer = null;
+    }
+    this.validationReport = null;
+    this.dispatchEvent(new CustomEvent('shacl-validation-cleared', {
+      bubbles: true,
+      composed: true
+    }));
+    this.requestUpdate();
+  }
+
   setAlternativePathSelectOpen(key: string, value: boolean) {
     this.alternativePathSelectOpen = {
       ...this.alternativePathSelectOpen,
@@ -651,6 +794,9 @@ export class ShaclRenderer extends TwLitElement {
       } else {
         console.warn(`Unsupported path type for addition: ${path.type}`);
       }
+      if (this.validateOn === 'change' || (this.validationReport && !this.validationReport.conforms)) {
+        this.triggerDebouncedValidation();
+      }
     } else {
       console.warn('Cannot add to data store: missing dataStore, focusNode, path, or value');
     }
@@ -679,6 +825,9 @@ export class ShaclRenderer extends TwLitElement {
         }
       } else {
         console.warn(`Unsupported path type for removal: ${path.type}`);
+      }
+      if (this.validateOn === 'change' || (this.validationReport && !this.validationReport.conforms)) {
+        this.triggerDebouncedValidation();
       }
     } else {
       console.warn('Cannot remove from data store: missing dataStore, focusNode, path, or value');
@@ -824,6 +973,7 @@ export class ShaclRenderer extends TwLitElement {
         reconstructUi = true;
       }
       if (reconstructUi) {
+        this.validationReport = null;
         if (this.widgetScoringStore) {
           await this.augmentScoringStoreWithCustomWidgets();
         }
