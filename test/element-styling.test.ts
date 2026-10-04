@@ -54,4 +54,16 @@ describe("styling slots (single source of truth)", () => {
       expect(ShaclRenderer.DEFAULTS.detailsEditorClass).toContain("col-span-full");
       expect(ShaclRenderer.DEFAULTS.nestedRailClass).not.toContain("border-l-2");
    });
+
+   it("defines error styling slots for input validation and nested error badges", () => {
+      expect(ShaclRenderer.DEFAULTS).toHaveProperty("inputErrorClass");
+      expect(ShaclRenderer.DEFAULTS.inputErrorClass).toContain("border-red-500");
+      expect(ShaclRenderer.DEFAULTS).toHaveProperty("fieldErrorMessageClass");
+      expect(ShaclRenderer.DEFAULTS.fieldErrorMessageClass).toContain("text-red-600");
+      expect(ShaclRenderer.DEFAULTS).toHaveProperty("nestedSummaryErrorBadgeClass");
+      expect(ShaclRenderer.DEFAULTS.nestedSummaryErrorBadgeClass).toContain("text-red-700");
+      expect(ShaclRenderer.DEFAULTS).toHaveProperty("nestedSummaryErrorRowClass");
+      expect(ShaclRenderer.DEFAULTS.nestedSummaryErrorRowClass).toContain("border-red-300");
+   });
 });
+

@@ -117,6 +117,12 @@ export const STYLING_SLOTS = {
    valueTableViewerCellClass: 'px-3 py-2 align-top text-sm text-zinc-800 dark:text-zinc-100',
    valueTablePaginationClass: 'flex items-center justify-between gap-2 px-3 py-2 text-sm text-zinc-500 dark:text-zinc-400 border-t border-zinc-200 dark:border-zinc-700',
    valueTablePaginationButtonClass: 'px-2 py-1 rounded border border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer',
+
+   // ── Error & Validation States ────────────────────────────────────────────────
+   inputErrorClass: 'border-red-500 dark:border-red-500 focus:border-red-500 focus:ring-red-500/20 text-red-900 dark:text-red-100 bg-red-50/20 dark:bg-red-950/20',
+   fieldErrorMessageClass: 'mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1.5 font-medium',
+   nestedSummaryErrorBadgeClass: 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400 border border-red-200 dark:border-red-900/50',
+   nestedSummaryErrorRowClass: 'border-red-300 dark:border-red-800/80 bg-red-50/20 dark:bg-red-950/10',
 } as const;
 
 /** Names of every styling slot. */

@@ -8,12 +8,14 @@ import {html, nothing} from "lit";
 import {until} from "lit/directives/until.js";
 import {twMerge} from "tailwind-merge";
 import {type RdfStore} from "rdf-stores";
-import {type LabeledValue, type TailwindClasses, type UIComponent, type UIComponentValue} from "../../types.ts";
+import {type LabeledValue, type TailwindClasses, type UIComponent, type UIComponentValue, type Path} from "../../types.ts";
 import {rdf, RDF as RDF_, SH, shui, XSD, xsd} from "../../core/namespaces.ts";
 import {findTailwindHeightValue} from "../tailwind.ts";
 import {toLabeledValue} from "../../core/labels.ts";
 import {cloneUiComponent} from "../../core/clone.ts";
 import {ShaclRenderer} from "../../shacl-renderer.ts";
+import {type DetailedViolation} from "../../core/validation.ts";
+import {type TemplateResult} from "lit";
 
 export const df: RDF.DataFactory = new DataFactory();
 
@@ -471,5 +473,57 @@ export function getSummaryLabelAndAvatar(
    }
 
    return { summaryTitle, summarySubtitle, avatarText };
+}
+
+export function getFieldViolations(
+   renderer: ShaclRenderer,
+   focusNode?: Term,
+   path?: Path | string
+): DetailedViolation[] {
+   const report = (renderer as any).validationReport;
+   if (!report?.violationMap || !focusNode) return [];
+   const focusNodeStr = focusNode.value;
+   const pathStr = typeof path === 'string' ? path : path?.path;
+   if (!pathStr) return [];
+   return report.violationMap.get(`${focusNodeStr}#${pathStr}`) ?? [];
+}
+
+export function renderFieldError(
+   violations: DetailedViolation[],
+   errorId: string,
+   classes: TailwindClasses
+): TemplateResult | typeof nothing {
+   if (!violations || violations.length === 0) return nothing;
+   const msg = violations.map(v => v.message).join(' · ');
+   return html`
+      <div class="${twMerge(classes.fieldErrorMessageClass)}" id="${errorId}" role="alert">
+         <svg class="size-3.5 shrink-0 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+         </svg>
+         <span>${msg}</span>
+      </div>
+   `;
+}
+
+export function renderMissingRequiredAlert(
+   uiComponent: UIComponent,
+   renderer: ShaclRenderer,
+   classes: TailwindClasses,
+   violations: DetailedViolation[]
+): TemplateResult {
+   const msg = violations.length > 0
+      ? violations.map(v => v.message).join(' · ')
+      : `${uiComponent.label || 'This field'} is required (at least 1 value)`;
+
+   return html`
+      <div class="flex items-center justify-between p-2.5 mb-2 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 text-xs text-red-700 dark:text-red-300">
+         <div class="flex items-center gap-2">
+            <svg class="size-4 shrink-0 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+               <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span class="font-medium">${msg}</span>
+         </div>
+      </div>
+   `;
 }
 
