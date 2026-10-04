@@ -39,7 +39,7 @@
   - `CustomWidgetRenderContext.isEmpty: boolean`
   - Styling slot `customWidgetErrorClass` in `TailwindClasses`
 
-- [ ] **Step 1: Write the failing test for `customWidgetErrorClass` styling slot**
+- [x] **Step 1: Write the failing test for `customWidgetErrorClass` styling slot**
 
 In `test/element-styling.test.ts`, add test verifying that `customWidgetErrorClass` exists in default styling and can be customized on `<shacl-renderer>`:
 
@@ -52,12 +52,12 @@ it('supports customWidgetErrorClass styling slot override', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run test/element-styling.test.ts`
 Expected: FAIL (property `customWidgetErrorClass` not defined on `ShaclRenderer`)
 
-- [ ] **Step 3: Update `lib/types.ts` and `lib/styling-slots.ts`**
+- [x] **Step 3: Update `lib/types.ts` and `lib/styling-slots.ts`**
 
 1. In `lib/types.ts`, add to `CustomWidgetRenderContext`:
    ```typescript
@@ -69,12 +69,12 @@ Expected: FAIL (property `customWidgetErrorClass` not defined on `ShaclRenderer`
    - Add `'customWidgetErrorClass'` to `STYLING_SLOT_NAMES`.
    - Add `customWidgetErrorClass: 'ring-1 ring-red-500/80 dark:ring-red-500/80 rounded-md p-0.5 transition-shadow'` to `DEFAULTS`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run test/element-styling.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/types.ts lib/styling-slots.ts test/element-styling.test.ts
@@ -93,19 +93,19 @@ git commit -m "feat(types): add validation context to CustomWidgetRenderContext 
 - Consumes: `getFieldViolations`, `renderFieldError`, `CustomWidgetRenderContext`, `classes.customWidgetErrorClass`
 - Produces: Error-wrapped custom widget rendering in `renderEditor`
 
-- [ ] **Step 1: Write the failing integration test in `test/custom-widget-validation.test.ts`**
+- [x] **Step 1: Write the failing integration test in `test/custom-widget-validation.test.ts`**
 
 Create `test/custom-widget-validation.test.ts` registering a custom widget against a shape requiring `sh:minCount 1`. Verify that without data, the rendered DOM contains:
 1. An outer container with `classes.customWidgetErrorClass` (e.g. `ring-red-500`).
 2. An inline `role="alert"` element containing the SHACL violation reason.
 3. When `onValueChange` is called with a valid IRI, the error ring and alert are cleared.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run test/custom-widget-validation.test.ts`
 Expected: FAIL (custom widget is rendered without error wrapper or role="alert")
 
-- [ ] **Step 3: Update `renderEditor` in `lib/presentation/widgets/layout.ts`**
+- [x] **Step 3: Update `renderEditor` in `lib/presentation/widgets/layout.ts`**
 
 In `lib/presentation/widgets/layout.ts`:
 1. When `hasCustomWidget(value.selectedWidget)` is matched:
@@ -116,12 +116,12 @@ In `lib/presentation/widgets/layout.ts`:
    - Render widget content (`customWidget.render(context)` or `renderCustomWidgetMount(customWidget, context)`).
    - Wrap in `<div class="custom-widget-field w-full relative">` with `<div class="${hasError ? twMerge('rounded-md ring-1 ring-red-500/80 dark:ring-red-500/80 p-0.5 transition-shadow', classes.customWidgetErrorClass) : ''}">` and `${hasError ? renderFieldError(violations, classes) : nothing}`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run test/custom-widget-validation.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/presentation/widgets/layout.ts test/custom-widget-validation.test.ts
@@ -140,18 +140,18 @@ git commit -m "feat(layout): wrap custom widgets in error container and render i
 - Consumes: `CustomWidgetRenderContext.hasError`, `CustomWidgetRenderContext.violations`
 - Produces: `<vocab-search-bar ?invalid="${hasError}" aria-invalid="${hasError ? 'true' : 'false'}">` and view-mode missing value indicator
 
-- [ ] **Step 1: Write unit tests in `test/widgets/vocabserver.test.ts`**
+- [x] **Step 1: Write unit tests in `test/widgets/vocabserver.test.ts`**
 
 Add tests to `test/widgets/vocabserver.test.ts`:
 1. Edit mode: When `hasError: true`, the template includes `?invalid` and `aria-invalid="true"`.
 2. View mode: When `hasError: true` and `value` is empty, renders `"Missing required value"` text.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run test/widgets/vocabserver.test.ts`
 Expected: FAIL (missing `invalid` attribute or error text)
 
-- [ ] **Step 3: Update `VocabServerWidgetDefinition.render` in `lib/widgets/vocabserver/component.ts`**
+- [x] **Step 3: Update `VocabServerWidgetDefinition.render` in `lib/widgets/vocabserver/component.ts`**
 
 1. In view mode:
    ```typescript
@@ -169,12 +169,12 @@ Expected: FAIL (missing `invalid` attribute or error text)
    aria-invalid="${hasError ? 'true' : 'false'}"
    ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run test/widgets/vocabserver.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add lib/widgets/vocabserver/component.ts test/widgets/vocabserver.test.ts
@@ -189,24 +189,24 @@ git commit -m "feat(vocabserver): forward invalid attributes and support view mo
 - Verify: Full test suite across project
 - Verify: Workbench browser behavior
 
-- [ ] **Step 1: Run full test suite**
+- [x] **Step 1: Run full test suite**
 
 Run: `npm test`
 Expected: All test suites PASS (29+ suites, 166+ tests).
 
-- [ ] **Step 2: Run production bundle build**
+- [x] **Step 2: Run production bundle build**
 
 Run: `npm run build`
 Expected: Clean build with 0 TypeScript/bundler errors.
 
-- [ ] **Step 3: Run browser subagent verification**
+- [x] **Step 3: Run browser subagent verification**
 
 Launch browser subagent to `http://localhost:5173/src/workbench.html`.
 Verify that on initial load of Oceanographic Cruise:
 - VocabServer fields (*Open Data License*, *Navigation CRS*, *MarineInfo Person*, *MarineInfo Institute*) visibly render the red container outline and inline violation alert.
 - Capture screenshot as evidence.
 
-- [ ] **Step 4: Commit any documentation / final integration updates**
+- [x] **Step 4: Commit any documentation / final integration updates**
 
 ```bash
 git add -A

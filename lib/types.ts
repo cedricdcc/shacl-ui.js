@@ -264,6 +264,7 @@ export type TailwindClasses = {
    collectionItemLabelClass?: string;
    focusNodePickerClass?: string;
    inputErrorClass?: string;
+   customWidgetErrorClass?: string;
    fieldErrorMessageClass?: string;
    nestedSummaryErrorBadgeClass?: string;
    nestedSummaryErrorRowClass?: string;
