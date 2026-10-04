@@ -25,6 +25,10 @@ export function renderDetailsEditor(
    const canRemove = (uiComponent.node ? (uiComponent.children?.length ?? 0) : uiComponent.values.length) > (uiComponent.minCount || 0);
    const isMultiple = (uiComponent.maxCount ?? 2) > 1 || uiComponent.values.length > 1;
    const itemLabel = uiComponent.label || `Item #${index + 1}`;
+   const itemFocusNode = value.value?.value;
+   const errorCount = (itemFocusNode && renderer.validationReport?.focusNodeViolationCount)
+      ? (renderer.validationReport.focusNodeViolationCount.get(itemFocusNode) ?? 0)
+      : 0;
 
    if (!isMultiple) {
       return html`
@@ -34,6 +38,11 @@ export function renderDetailsEditor(
                       <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 truncate">
                           ↳ ${itemLabel}
                       </span>
+                      ${errorCount > 0 ? html`
+                          <span class="${twMerge(classes.nestedSummaryErrorBadgeClass)}">
+                              ⚠️ ${errorCount} ${errorCount === 1 ? 'error' : 'errors'}
+                          </span>
+                      ` : nothing}
                       ${uiComponent.description ? html`<span class="text-xs text-zinc-400 truncate">· ${uiComponent.description}</span>` : nothing}
                       ${renderOrSelectorForValue(renderer, uiComponent, value, index, classes)}
                       ${uiComponent.classes && uiComponent.classes.length > 1 ? renderDetailsClassSelect(renderer, uiComponent, value, index, classes) : nothing}
@@ -68,7 +77,11 @@ export function renderDetailsEditor(
 
    return html`
        <div class="mb-3.5">
-           <div class="${twMerge(classes.nestedSummaryRowClass, 'group')}"
+           <div class="${twMerge(
+                classes.nestedSummaryRowClass,
+                errorCount > 0 ? classes.nestedSummaryErrorRowClass : '',
+                'group'
+           )}"
                 @click="${() => {
                     renderer.toggleNestedItemExpanded(uiComponent.uuid, index, defaultOpen);
                 }}">
@@ -82,6 +95,11 @@ export function renderDetailsEditor(
                            <span class="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium truncate">${summarySubtitle}</span>
                        ` : nothing}
                    </div>
+                   ${errorCount > 0 ? html`
+                       <span class="${twMerge(classes.nestedSummaryErrorBadgeClass)}">
+                           ⚠️ ${errorCount} ${errorCount === 1 ? 'error' : 'errors'}
+                       </span>
+                   ` : nothing}
                </div>
 
                <div class="flex items-center gap-1 shrink-0 ml-2">
