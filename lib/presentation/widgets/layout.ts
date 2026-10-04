@@ -17,6 +17,7 @@ import {getCustomWidget, hasCustomWidget} from "./registry.ts";
 import {
    getFieldViolations,
    renderDescription,
+   renderFieldError,
    renderLabel,
    renderMissingRequiredAlert,
    renderOrSelectorForValue,
@@ -459,6 +460,10 @@ export function renderEditor(
       const shapeNode = (uiComponent as any).propertyShape || uiComponent.node || uiComponent.iri;
       const annotations = extractShapeAnnotations(shapeNode, renderer.shapesStore);
 
+      const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+      const hasError = violations.length > 0;
+      const isEmpty = !value.value?.value || value.value.value.trim() === '';
+
       const onValueChange = (newTerm: Term | null) => {
          const prevTerm = value.value;
          if (prevTerm && renderer.removeFromDataStore) {
@@ -480,14 +485,26 @@ export function renderEditor(
          disabled,
          mode: renderer.mode || 'edit',
          annotations,
-         onValueChange
+         onValueChange,
+         violations,
+         hasError,
+         isEmpty
       };
 
-      if (customWidget.render) {
-         return customWidget.render(context);
-      } else if (customWidget.mount) {
-         return renderCustomWidgetMount(customWidget, context);
-      }
+      const widgetContent = customWidget.render
+         ? customWidget.render(context)
+         : (customWidget.mount ? renderCustomWidgetMount(customWidget, context) : nothing);
+
+      const errorId = `${uiComponent.uuid}-${index}-error`;
+
+      return html`
+         <div class="custom-widget-field w-full relative">
+            <div class="${hasError ? twMerge('rounded-md ring-1 ring-red-500/80 dark:ring-red-500/80 p-0.5 transition-shadow', classes.customWidgetErrorClass) : ''}">
+               ${widgetContent}
+            </div>
+            ${hasError ? renderFieldError(violations, errorId, classes) : nothing}
+         </div>
+      `;
    }
 
    switch (value.selectedWidget) {
