@@ -99,6 +99,59 @@ describe('VocabServer Reference Widget', () => {
       expect(str).toContain('vocab-search-bar');
       expect(str).toContain('https://vocab.vliz.be');
     });
+
+    it('renders edit mode with invalid attributes when hasError is true', () => {
+      const mockContext: CustomWidgetRenderContext = {
+        renderer: {} as any,
+        uiComponent: { uuid: 'c1', iri: df.namedNode('http://ex.org/p'), paths: [], values: [] },
+        value: { uuid: 'v1', value: df.namedNode(''), path: { path: 'http://ex.org/p' } },
+        index: 0,
+        classes: STYLING_SLOTS as Required<TailwindClasses>,
+        disabled: false,
+        mode: 'edit',
+        annotations: {},
+        onValueChange: vi.fn(),
+        hasError: true,
+        violations: [{
+          focusNode: 'http://example.org/item/1',
+          path: 'http://ex.org/p',
+          constraintComponent: 'MinCountConstraintComponent',
+          message: 'Value is required'
+        }],
+        isEmpty: true
+      };
+
+      const template = VocabServerWidgetDefinition.render!(mockContext);
+      const str = JSON.stringify(template);
+      expect(str).toContain('aria-invalid');
+      expect(str).toContain('true');
+    });
+
+    it('renders view mode with missing value indicator when empty and hasError is true', () => {
+      const mockContext: CustomWidgetRenderContext = {
+        renderer: {} as any,
+        uiComponent: { uuid: 'c1', iri: df.namedNode('http://ex.org/p'), paths: [], values: [] },
+        value: { uuid: 'v1', value: df.namedNode(''), path: { path: 'http://ex.org/p' } },
+        index: 0,
+        classes: STYLING_SLOTS as Required<TailwindClasses>,
+        disabled: true,
+        mode: 'view',
+        annotations: {},
+        onValueChange: vi.fn(),
+        hasError: true,
+        violations: [{
+          focusNode: 'http://example.org/item/1',
+          path: 'http://ex.org/p',
+          constraintComponent: 'MinCountConstraintComponent',
+          message: 'Value is required'
+        }],
+        isEmpty: true
+      };
+
+      const template = VocabServerWidgetDefinition.render!(mockContext);
+      const str = JSON.stringify(template);
+      expect(str).toContain('Missing required value');
+    });
   });
 
   describe('registerVocabServerWidget', () => {

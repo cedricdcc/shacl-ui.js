@@ -100,13 +100,15 @@ export const VocabServerWidgetDefinition: CustomWidgetDefinition = {
   label: 'VocabServer Controlled Vocabulary Lookup',
   description: 'Search and select controlled vocabulary terms from external VocabServer endpoints',
   render(context: CustomWidgetRenderContext): TemplateResult {
-    const { uiComponent, value, mode, annotations, onValueChange } = context;
+    const { uiComponent, value, mode, annotations, onValueChange, hasError } = context;
     const currentVal = value.value?.value ?? '';
 
     // View Mode: Render read-only badge
     if (mode === 'view') {
       if (!currentVal) {
-        return html`<span class="text-xs text-zinc-400 italic">—</span>`;
+        return hasError
+          ? html`<span class="text-xs text-red-500 dark:text-red-400 italic">Missing required value</span>`
+          : html`<span class="text-xs text-zinc-400 italic">—</span>`;
       }
 
       return html`
@@ -139,6 +141,8 @@ export const VocabServerWidgetDefinition: CustomWidgetDefinition = {
           languages-string="${config.languagesString ?? nothing}"
           ?single-select="${config.singleSelect}"
           selections="${currentVal || nothing}"
+          ?invalid="${hasError}"
+          aria-invalid="${hasError ? 'true' : 'false'}"
           @selection-changed="${(e: CustomEvent) => {
             const detail = e.detail;
             if (Array.isArray(detail) && detail.length > 0 && detail[0]?.uri) {
