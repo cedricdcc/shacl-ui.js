@@ -516,7 +516,7 @@ export function renderMissingRequiredAlert(
       : `${uiComponent.label || 'This field'} is required (at least 1 value)`;
 
    return html`
-      <div class="flex items-center justify-between p-2.5 mb-2 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 text-xs text-red-700 dark:text-red-300">
+      <div role="alert" class="flex items-center justify-between p-2.5 mb-2 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 text-xs text-red-700 dark:text-red-300">
          <div class="flex items-center gap-2">
             <svg class="size-4 shrink-0 text-red-500" viewBox="0 0 20 20" fill="currentColor">
                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>

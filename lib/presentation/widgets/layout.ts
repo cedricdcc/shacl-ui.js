@@ -15,8 +15,10 @@ import {shui} from "../../core/namespaces.ts";
 import {ShaclRenderer} from "../../shacl-renderer.ts";
 import {getCustomWidget, hasCustomWidget} from "./registry.ts";
 import {
+   getFieldViolations,
    renderDescription,
    renderLabel,
+   renderMissingRequiredAlert,
    renderOrSelectorForValue,
    renderPlusIcon,
    renderSelectWidgetIcon,
@@ -369,6 +371,11 @@ export function renderUIComponent(
    }
    const isSingleNested = (uiComponent.defaultWidget === shui('DetailsEditor') || uiComponent.values[0]?.selectedWidget === shui('DetailsEditor')) && ((uiComponent.maxCount ?? 2) <= 1 && uiComponent.values.length <= 1);
 
+   const primaryPath = uiComponent.paths?.[0];
+   const missingViolations = (uiComponent.values.length === 0 && (uiComponent.minCount ?? 0) > 0 && primaryPath)
+      ? getFieldViolations(renderer, uiComponent.focusNode, primaryPath)
+      : [];
+
    return html`
        <div class="mb-2">
            ${renderPlusIcon(renderer, uiComponent, classes)}
@@ -376,6 +383,10 @@ export function renderUIComponent(
            ${isSingleNested ? nothing : renderLabel(uiComponent, classes)}
 
            ${isSingleNested ? nothing : renderDescription(uiComponent, classes)}
+
+           ${missingViolations.length > 0
+               ? renderMissingRequiredAlert(uiComponent, renderer, classes, missingViolations)
+               : nothing}
 
            ${uiComponent.values.map((value, index) => {
                const key = `${uiComponent.uuid}-${uiComponent.focusNode?.value}-${value.path.path}-${index}`;

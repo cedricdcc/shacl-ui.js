@@ -8,7 +8,7 @@ import {findTailwindMarginBottomValue} from "../tailwind.ts";
 import {mutateTerm} from "../../core/rdf.ts";
 import {cloneUiComponent} from "../../core/clone.ts";
 import {ShaclRenderer} from "../../shacl-renderer.ts";
-import {df, renderXIcon} from "./shared.ts";
+import {df, renderXIcon, getFieldViolations, renderFieldError} from "./shared.ts";
 
 export function renderAutoCompleteEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
    const key = `${uiComponent.uuid}-${uiComponent.focusNode?.value}-${value.path.path}-${index}`;
@@ -33,6 +33,10 @@ export function renderAutoCompleteEditor(renderer: ShaclRenderer, uiComponent: U
       instance.label.toLowerCase().includes(displayText.toLowerCase())
    );
 
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
+
    return html`
        <div class="${twMerge('relative', `mb-${findTailwindMarginBottomValue(twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.autoCompleteEditorClass)) || '0'}`)}">
            <!-- Input -->
@@ -42,12 +46,15 @@ export function renderAutoCompleteEditor(renderer: ShaclRenderer, uiComponent: U
                             classes.globalInputFieldClass,
                             classes.autoCompleteEditorClass,
                             'mb-0',
-                            disabled ? 'cursor-not-allowed opacity-60' : ''
+                            disabled ? 'cursor-not-allowed opacity-60' : '',
+                            hasError ? classes.inputErrorClass : ''
                     )}"
                     autocomplete="off"
                     .value="${displayText}"
                     placeholder="${uiComponent.label}"
                     ?disabled="${disabled}"
+                    aria-invalid="${hasError ? 'true' : nothing}"
+                    aria-describedby="${hasError ? errorId : nothing}"
                     @focus="${() => renderer.setAutoCompleteEditorOpen(key, true)}"
                     @input="${(e: Event) => {
                         const input = e.target as HTMLInputElement;
@@ -104,6 +111,7 @@ export function renderAutoCompleteEditor(renderer: ShaclRenderer, uiComponent: U
                </ul>
            ` : ''}
 
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }
@@ -235,6 +243,10 @@ export function renderEnumSelectEditor(renderer: ShaclRenderer, uiComponent: UIC
       o => o.value.value === value.value.value
    );
 
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
+
    return html`
        <div class="${twMerge(
                'relative',
@@ -255,8 +267,12 @@ export function renderEnumSelectEditor(renderer: ShaclRenderer, uiComponent: UIC
                            classes.globalInputFieldClass,
                            classes.enumSelectEditorClass,
                            'appearance-none pr-10 mb-0 flex items-center',
-                           disabled ? 'cursor-not-allowed opacity-60 pointer-events-none' : 'cursor-pointer'
+                           disabled ? 'cursor-not-allowed opacity-60 pointer-events-none' : 'cursor-pointer',
+                           hasError ? classes.inputErrorClass : ''
                    )}"
+                   role="combobox"
+                   aria-invalid="${hasError ? 'true' : nothing}"
+                   aria-describedby="${hasError ? errorId : nothing}"
                    @click="${() =>
                            renderer.setEnumSelectEditorOpen(key, !open)
                    }"
@@ -326,6 +342,7 @@ export function renderEnumSelectEditor(renderer: ShaclRenderer, uiComponent: UIC
                </ul>
            ` : ''}
 
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }
@@ -340,6 +357,10 @@ export function renderInstancesSelectEditor(renderer: ShaclRenderer, uiComponent
    const selectedInstance = instances.find(
       i => i.value.value === value.value.value
    );
+
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
 
    return html`
        <div class="${twMerge(
@@ -361,8 +382,13 @@ export function renderInstancesSelectEditor(renderer: ShaclRenderer, uiComponent
                            classes.globalInputFieldClass,
                            classes.instancesSelectEditorClass,
                            'appearance-none pr-10 mb-0 flex items-center',
-                           disabled ? 'cursor-not-allowed opacity-60 pointer-events-none' : 'cursor-pointer'
+                           disabled ? 'cursor-not-allowed opacity-60 pointer-events-none' : 'cursor-pointer',
+                           hasError ? classes.inputErrorClass : ''
                    )}"
+                   role="combobox"
+                   aria-expanded="${open}"
+                   aria-invalid="${hasError ? 'true' : nothing}"
+                   aria-describedby="${hasError ? errorId : nothing}"
                    @click="${() =>
                            renderer.setInstancesSelectEditorOpen?.(key, !open)
                    }"
@@ -431,6 +457,8 @@ export function renderInstancesSelectEditor(renderer: ShaclRenderer, uiComponent
                    `)}
                </ul>
            ` : ''}
+
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }
@@ -458,6 +486,10 @@ export function renderSubClassEditor(renderer: ShaclRenderer, uiComponent: UICom
       subclass.label.toLowerCase().includes(displayText.toLowerCase())
    );
 
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
+
    return html`
        <div class="${twMerge('relative', `mb-${findTailwindMarginBottomValue(twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.subClassEditorClass)) || '0'}`)}">
            <!-- Input -->
@@ -467,12 +499,15 @@ export function renderSubClassEditor(renderer: ShaclRenderer, uiComponent: UICom
                            classes.globalInputFieldClass,
                            classes.subClassEditorClass,
                            'mb-0',
-                           disabled ? 'cursor-not-allowed opacity-60' : ''
+                           disabled ? 'cursor-not-allowed opacity-60' : '',
+                           hasError ? classes.inputErrorClass : ''
                    )}"
                    autocomplete="off"
                    .value="${displayText}"
                    placeholder="${uiComponent.label}"
                    ?disabled="${disabled}"
+                   aria-invalid="${hasError ? 'true' : nothing}"
+                   aria-describedby="${hasError ? errorId : nothing}"
                    @focus="${() => renderer.setSubClassEditorOpen(key, true)}"
                    @input="${(e: Event) => {
                        const input = e.target as HTMLInputElement;
@@ -529,6 +564,7 @@ export function renderSubClassEditor(renderer: ShaclRenderer, uiComponent: UICom
                </ul>
            ` : ''}
 
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }

@@ -8,9 +8,12 @@ import {xsd} from "../../core/namespaces.ts";
 import {findTailwindMarginBottomValue} from "../tailwind.ts";
 import {expandPrefixedIRI, mutateTerm} from "../../core/rdf.ts";
 import {ShaclRenderer} from "../../shacl-renderer.ts";
-import {renderXIcon, getDataType} from "./shared.ts";
+import {renderXIcon, getDataType, getFieldViolations, renderFieldError} from "./shared.ts";
 
 export function renderBlankNodeEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
    return html`
        <div class="${twMerge('relative', `mb-${findTailwindMarginBottomValue(twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.autoCompleteEditorClass)) || '0'}`)}">
            <input
@@ -18,33 +21,42 @@ export function renderBlankNodeEditor(renderer: ShaclRenderer, uiComponent: UICo
                            classes.globalFieldClass,
                            classes.globalInputFieldClass,
                            classes.blankNodeEditorClass,
-                           'mb-0'
+                           'mb-0',
+                           hasError ? classes.inputErrorClass : ''
                    )}"
                    autocomplete="off"
                    .value="${value.value.value ?? ''}"
                    placeholder="${uiComponent.label}"
                    disabled
+                   aria-invalid="${hasError ? 'true' : nothing}"
+                   aria-describedby="${hasError ? errorId : nothing}"
            />
            ${disabled ? nothing : renderXIcon(uiComponent, classes, () => {
                renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value, uiComponent.children?.[index]);
                uiComponent.values.splice(index, 1);
                renderer.rerender();
            })}
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }
 
 export function renderBooleanEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
    return html`
        <div class="${twMerge('relative', `mb-${findTailwindMarginBottomValue(twMerge(classes.labelClass, classes.booleanEditorLabelClass)) || '0'}`)}">
            <label class="${twMerge(classes.labelClass, classes.booleanEditorLabelClass)}"
                   for="${uiComponent.uuid}-${index}">
                <input
-                       class="${twMerge(classes.globalFieldClass, classes.booleanEditorClass, 'mb-0')}"
+                       class="${twMerge(classes.globalFieldClass, classes.booleanEditorClass, 'mb-0', hasError ? classes.inputErrorClass : '')}"
                        id="${uiComponent.uuid}-${index}"
                        type="checkbox"
                        ?checked="${value.value.value === "true"}"
                        ?disabled="${disabled}"
+                       aria-invalid="${hasError ? 'true' : nothing}"
+                       aria-describedby="${hasError ? errorId : nothing}"
                        @change="${(e: Event) => {
                            const input = e.target as HTMLInputElement;
                            const newTerm = mutateTerm(value.value, input.checked ? "true" : "false");
@@ -60,15 +72,19 @@ export function renderBooleanEditor(renderer: ShaclRenderer, uiComponent: UIComp
                uiComponent.values.splice(index, 1);
                renderer.rerender();
            })}
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }
 
 export function renderDatePickerEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
    return html`
        <div class="${twMerge('relative', `mb-${findTailwindMarginBottomValue(twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.datePickerEditorClass)) || '0'}`)}">
            <input
-                   class="${twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.datePickerEditorClass, 'mb-0', disabled ? 'cursor-not-allowed opacity-60' : '')}"
+                   class="${twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.datePickerEditorClass, 'mb-0', disabled ? 'cursor-not-allowed opacity-60' : '', hasError ? classes.inputErrorClass : '')}"
                    id="${uiComponent.uuid}-${index}"
                    ?required="${(uiComponent.minCount ?? 0) > 0}"
                    type="date"
@@ -76,6 +92,8 @@ export function renderDatePickerEditor(renderer: ShaclRenderer, uiComponent: UIC
                    max="${uiComponent.maxInclusive ?? nothing}"
                    .value="${value.value.value ?? ''}"
                    ?disabled="${disabled}"
+                   aria-invalid="${hasError ? 'true' : nothing}"
+                   aria-describedby="${hasError ? errorId : nothing}"
                    @change="${(e: Event) => {
                        const input = e.target as HTMLInputElement;
                        const newTerm = mutateTerm(value.value, input.value);
@@ -89,15 +107,19 @@ export function renderDatePickerEditor(renderer: ShaclRenderer, uiComponent: UIC
                uiComponent.values.splice(index, 1);
                renderer.rerender();
            })}
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }
 
 export function renderDateTimePickerEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
    return html`
        <div class="${twMerge('relative', `mb-${findTailwindMarginBottomValue(twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.dateTimePickerEditorClass)) || '0'}`)}">
            <input
-                   class="${twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.dateTimePickerEditorClass, 'mb-0', disabled ? 'cursor-not-allowed opacity-60' : '')}"
+                   class="${twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.dateTimePickerEditorClass, 'mb-0', disabled ? 'cursor-not-allowed opacity-60' : '', hasError ? classes.inputErrorClass : '')}"
                    id="${uiComponent.uuid}-${index}"
                    ?required="${(uiComponent.minCount ?? 0) > 0}"
                    type="datetime-local"
@@ -105,6 +127,8 @@ export function renderDateTimePickerEditor(renderer: ShaclRenderer, uiComponent:
                    max="${uiComponent.maxInclusive ?? nothing}"
                    .value="${value.value.value ?? ''}"
                    ?disabled="${disabled}"
+                   aria-invalid="${hasError ? 'true' : nothing}"
+                   aria-describedby="${hasError ? errorId : nothing}"
                    @change="${(e: Event) => {
                        const input = e.target as HTMLInputElement;
                        const newTerm = mutateTerm(value.value, input.value);
@@ -118,15 +142,19 @@ export function renderDateTimePickerEditor(renderer: ShaclRenderer, uiComponent:
                uiComponent.values.splice(index, 1);
                renderer.rerender();
            })}
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }
 
 export function renderIRIEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
    return html`
        <div class="${twMerge('relative', `mb-${findTailwindMarginBottomValue(twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.iriEditorClass)) || '0'}`)}">
            <input
-                   class="${twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.iriEditorClass, 'mb-0', disabled ? 'cursor-not-allowed opacity-60' : '')}"
+                   class="${twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.iriEditorClass, 'mb-0', disabled ? 'cursor-not-allowed opacity-60' : '', hasError ? classes.inputErrorClass : '')}"
                    id="${uiComponent.uuid}-${index}"
                    ?required="${(uiComponent.minCount ?? 0) > 0}"
                    type="url"
@@ -134,6 +162,8 @@ export function renderIRIEditor(renderer: ShaclRenderer, uiComponent: UIComponen
                    .value="${value.value.value ?? ''}"
                    placeholder="${uiComponent.label}"
                    ?disabled="${disabled}"
+                   aria-invalid="${hasError ? 'true' : nothing}"
+                   aria-describedby="${hasError ? errorId : nothing}"
                    @change="${async (e: Event) => {
                        const input = e.target as HTMLInputElement;
                        if (renderer.expandPrefixes) {
@@ -150,15 +180,19 @@ export function renderIRIEditor(renderer: ShaclRenderer, uiComponent: UIComponen
                uiComponent.values.splice(index, 1);
                renderer.rerender();
            })}
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }
 
 export function renderNumberFieldEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
    return html`
        <div class="${twMerge('relative', `mb-${findTailwindMarginBottomValue(twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.numberFieldEditorClass)) || '0'}`)}">
            <input
-                   class="${twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.numberFieldEditorClass, 'mb-0', disabled ? 'cursor-not-allowed opacity-60' : '')}"
+                   class="${twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.numberFieldEditorClass, 'mb-0', disabled ? 'cursor-not-allowed opacity-60' : '', hasError ? classes.inputErrorClass : '')}"
                    id="${uiComponent.uuid}-${index}"
                    ?required="${(uiComponent.minCount ?? 0) > 0}"
                    type="number"
@@ -169,6 +203,8 @@ export function renderNumberFieldEditor(renderer: ShaclRenderer, uiComponent: UI
                    placeholder="${uiComponent.label}"
                    .value="${value.value.value ?? ''}"
                    ?disabled="${disabled}"
+                   aria-invalid="${hasError ? 'true' : nothing}"
+                   aria-describedby="${hasError ? errorId : nothing}"
                    @change="${(e: Event) => {
                        const input = e.target as HTMLInputElement;
                        const newTerm = mutateTerm(value.value, input.value);
@@ -182,20 +218,26 @@ export function renderNumberFieldEditor(renderer: ShaclRenderer, uiComponent: UI
                uiComponent.values.splice(index, 1);
                renderer.rerender();
            })}
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }
 
 export function renderTextAreaEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
    return html`
        <div class="${twMerge('relative', `mb-${findTailwindMarginBottomValue(twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.textAreaEditorClass)) || '0'}`)}">
            <textarea
-                   class="${twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.textAreaEditorClass, 'mb-0', disabled ? 'cursor-not-allowed opacity-60' : '')}"
+                   class="${twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.textAreaEditorClass, 'mb-0', disabled ? 'cursor-not-allowed opacity-60' : '', hasError ? classes.inputErrorClass : '')}"
                    id="${uiComponent.uuid}-${index}"
                    ?required="${(uiComponent.minCount ?? 0) > 0}"
                    rows="4"
                    placeholder="${uiComponent.label}"
                    ?disabled="${disabled}"
+                   aria-invalid="${hasError ? 'true' : nothing}"
+                   aria-describedby="${hasError ? errorId : nothing}"
                    @change="${(e: Event) => {
                        const input = e.target as HTMLInputElement;
                        const newTerm = mutateTerm(value.value, input.value);
@@ -209,15 +251,19 @@ export function renderTextAreaEditor(renderer: ShaclRenderer, uiComponent: UICom
                uiComponent.values.splice(index, 1);
                renderer.rerender();
            })}
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }
 
 export function renderTextFieldEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
    return html`
        <div class="${twMerge('relative', `mb-${findTailwindMarginBottomValue(twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.textFieldEditorClass)) || '0'}`)}">
            <input
-                   class="${twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.textFieldEditorClass, 'mb-0', disabled ? 'cursor-not-allowed opacity-60' : '')}"
+                   class="${twMerge(classes.globalFieldClass, classes.globalInputFieldClass, classes.textFieldEditorClass, 'mb-0', disabled ? 'cursor-not-allowed opacity-60' : '', hasError ? classes.inputErrorClass : '')}"
                    id="${uiComponent.uuid}-${index}"
                    type="text"
                    pattern="${uiComponent.pattern ?? nothing}"
@@ -225,6 +271,8 @@ export function renderTextFieldEditor(renderer: ShaclRenderer, uiComponent: UICo
                    .value="${value.value.value ?? ''}"
                    placeholder="${uiComponent.label}"
                    ?disabled="${disabled}"
+                   aria-invalid="${hasError ? 'true' : nothing}"
+                   aria-describedby="${hasError ? errorId : nothing}"
                    @change="${(e: Event) => {
                        const input = e.target as HTMLInputElement;
                        const newTerm = mutateTerm(value.value, input.value);
@@ -238,6 +286,7 @@ export function renderTextFieldEditor(renderer: ShaclRenderer, uiComponent: UICo
                uiComponent.values.splice(index, 1);
                renderer.rerender();
            })}
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }
@@ -265,86 +314,97 @@ function renderLangDatalist(renderer: ShaclRenderer, uiComponent: UIComponent, v
 }
 
 export function renderTextFieldWithLangEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
-   // Just like a TextFieldEditor, but a grouped input with as second field, a small input for language tag
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
    return html`
-       <div class="${twMerge('flex rounded-md shadow-sm', `mb-${findTailwindMarginBottomValue(twMerge(classes.globalFieldClass, classes.globalInputFieldClass)) || '0'}`)}">
-           <!-- Literal value -->
-           <input
-                   id="${uiComponent.uuid}-${index}"
-                   type="text"
-                   pattern="${uiComponent.pattern ?? nothing}"
-                   ?required="${(uiComponent.minCount ?? 0) > 0}"
-                   .value="${value.value.value ?? ''}"
-                   placeholder="${uiComponent.label}"
-                   ?disabled="${disabled}"
-                   class="${twMerge(
-                           classes.globalFieldClass,
-                           classes.globalInputFieldClass,
-                           classes.textFieldEditorClass,
-                           'rounded-r-none pr-3 mb-0',
-                           disabled ? 'cursor-not-allowed opacity-60' : ''
-                   )}"
-                   @change="${(e: Event) => {
-                       const input = e.target as HTMLInputElement;
-                       const newTerm = mutateTerm(value.value, input.value);
-                       renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value);
-                       renderer.addToDataStore(uiComponent.focusNode, value.path, newTerm);
-                       value.value = newTerm;
-                   }}"
-           />
-
-           <!-- @ separator -->
-           <span
-                   class="${twMerge(
-                           classes.globalFieldClass,
-                           classes.globalInputFieldClass,
-                           'rounded-none pr-3 items-center bg-gray-50 w-auto border-x-0 mb-0'
-                   )}"
-                   aria-hidden="true"
-           >@</span>
-
-           <!-- Language tag -->
-           <div class="relative">
-               ${renderLangDatalist(renderer, uiComponent, value, index)}
+       <div class="${twMerge('flex flex-col', `mb-${findTailwindMarginBottomValue(twMerge(classes.globalFieldClass, classes.globalInputFieldClass)) || '0'}`)}">
+           <div class="flex rounded-md shadow-sm">
+               <!-- Literal value -->
                <input
+                       id="${uiComponent.uuid}-${index}"
                        type="text"
+                       pattern="${uiComponent.pattern ?? nothing}"
                        ?required="${(uiComponent.minCount ?? 0) > 0}"
-                       inputmode="latin"
-                       pattern="[a-zA-Z-]*"
-                       placeholder="Lang"
-                       list="${uiComponent.uuid}-${index}-langs"
-                       .value="${(value.value as Literal).language ?? ''}"
+                       .value="${value.value.value ?? ''}"
+                       placeholder="${uiComponent.label}"
                        ?disabled="${disabled}"
+                       aria-invalid="${hasError ? 'true' : nothing}"
+                       aria-describedby="${hasError ? errorId : nothing}"
                        class="${twMerge(
                                classes.globalFieldClass,
                                classes.globalInputFieldClass,
-                               'w-25 rounded-l-none mb-0',
-                               disabled ? 'cursor-not-allowed opacity-60' : ''
+                               classes.textFieldEditorClass,
+                               'rounded-r-none pr-3 mb-0',
+                               disabled ? 'cursor-not-allowed opacity-60' : '',
+                               hasError ? classes.inputErrorClass : ''
                        )}"
-                       aria-label="Language tag"
                        @change="${(e: Event) => {
                            const input = e.target as HTMLInputElement;
-                           const newTerm = mutateTerm(value.value, undefined, input.value);
+                           const newTerm = mutateTerm(value.value, input.value);
                            renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value);
                            renderer.addToDataStore(uiComponent.focusNode, value.path, newTerm);
                            value.value = newTerm;
                        }}"
                />
 
-               ${disabled ? nothing : renderXIcon(uiComponent, classes, () => {
-                   renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value, uiComponent.children?.[index]);
-                   uiComponent.values.splice(index, 1);
-                   renderer.rerender();
-               })}
+               <!-- @ separator -->
+               <span
+                       class="${twMerge(
+                               classes.globalFieldClass,
+                               classes.globalInputFieldClass,
+                               'rounded-none pr-3 items-center bg-gray-50 w-auto border-x-0 mb-0'
+                       )}"
+                       aria-hidden="true"
+               >@</span>
+
+               <!-- Language tag -->
+               <div class="relative">
+                   ${renderLangDatalist(renderer, uiComponent, value, index)}
+                   <input
+                           type="text"
+                           ?required="${(uiComponent.minCount ?? 0) > 0}"
+                           inputmode="latin"
+                           pattern="[a-zA-Z-]*"
+                           placeholder="Lang"
+                           list="${uiComponent.uuid}-${index}-langs"
+                           .value="${(value.value as Literal).language ?? ''}"
+                           ?disabled="${disabled}"
+                           class="${twMerge(
+                                   classes.globalFieldClass,
+                                   classes.globalInputFieldClass,
+                                   'w-25 rounded-l-none mb-0',
+                                   disabled ? 'cursor-not-allowed opacity-60' : ''
+                           )}"
+                           aria-label="Language tag"
+                           @change="${(e: Event) => {
+                               const input = e.target as HTMLInputElement;
+                               const newTerm = mutateTerm(value.value, undefined, input.value);
+                               renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value);
+                               renderer.addToDataStore(uiComponent.focusNode, value.path, newTerm);
+                               value.value = newTerm;
+                           }}"
+                   />
+
+                   ${disabled ? nothing : renderXIcon(uiComponent, classes, () => {
+                       renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value, uiComponent.children?.[index]);
+                       uiComponent.values.splice(index, 1);
+                       renderer.rerender();
+                   })}
+               </div>
            </div>
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }
 
 export function renderTextAreaWithLangEditor(renderer: ShaclRenderer, uiComponent: UIComponent, value: UIComponentValue, index: number, classes: TailwindClasses, disabled: boolean = false) {
+   const violations = getFieldViolations(renderer, uiComponent.focusNode, value.path);
+   const errorId = `err-${uiComponent.uuid}-${index}`;
+   const hasError = violations.length > 0;
    return html`
        <div class="${twMerge(
-               'flex rounded-md shadow-sm',
+               'flex flex-col',
                `mb-${findTailwindMarginBottomValue(
                        twMerge(
                                classes.globalFieldClass,
@@ -353,74 +413,80 @@ export function renderTextAreaWithLangEditor(renderer: ShaclRenderer, uiComponen
                        )
                ) || '0'}`
        )}">
-
-           <!-- Literal value (textarea) -->
-           <textarea
-                   id="${uiComponent.uuid}-${index}"
-                   ?required="${(uiComponent.minCount ?? 0) > 0}"
-                   rows="4"
-                   placeholder="${uiComponent.label}"
-                   ?disabled="${disabled}"
-                   class="${twMerge(
-                           classes.globalFieldClass,
-                           classes.globalInputFieldClass,
-                           classes.textAreaEditorClass,
-                           'rounded-r-none pr-3 mb-0 resize-y',
-                           disabled ? 'cursor-not-allowed opacity-60' : ''
-                   )}"
-                   @change="${(e: Event) => {
-                       const input = e.target as HTMLTextAreaElement;
-                       const newTerm = mutateTerm(value.value, input.value);
-                       renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value);
-                       renderer.addToDataStore(uiComponent.focusNode, value.path, newTerm);
-                       value.value = newTerm;
-                   }}"
-           >${value.value.value ?? ''}</textarea>
-
-           <!-- @ separator -->
-           <span
-                   class="${twMerge(
-                           classes.globalFieldClass,
-                           classes.globalInputFieldClass,
-                           'rounded-none pr-3 items-center align-middle content-center bg-gray-50 w-auto border-x-0 mb-0'
-                   )}"
-                   aria-hidden="true"
-           >@</span>
-
-           <!-- Language tag -->
-           <div class="relative">
-               ${renderLangDatalist(renderer, uiComponent, value, index)}
-               <input
-                       type="text"
+           <div class="flex rounded-md shadow-sm">
+               <!-- Literal value (textarea) -->
+               <textarea
+                       id="${uiComponent.uuid}-${index}"
                        ?required="${(uiComponent.minCount ?? 0) > 0}"
-                       inputmode="latin"
-                       pattern="[a-zA-Z-]*"
-                       placeholder="Lang"
-                       list="${uiComponent.uuid}-${index}-langs"
-                       .value="${(value.value as Literal).language ?? ''}"
+                       rows="4"
+                       placeholder="${uiComponent.label}"
                        ?disabled="${disabled}"
+                       aria-invalid="${hasError ? 'true' : nothing}"
+                       aria-describedby="${hasError ? errorId : nothing}"
                        class="${twMerge(
                                classes.globalFieldClass,
                                classes.globalInputFieldClass,
-                               'w-25 rounded-l-none mb-0 h-full',
-                               disabled ? 'cursor-not-allowed opacity-60' : ''
+                               classes.textAreaEditorClass,
+                               'rounded-r-none pr-3 mb-0 resize-y',
+                               disabled ? 'cursor-not-allowed opacity-60' : '',
+                               hasError ? classes.inputErrorClass : ''
                        )}"
-                       aria-label="Language tag"
                        @change="${(e: Event) => {
-                           const input = e.target as HTMLInputElement;
-                           const newTerm = mutateTerm(value.value, undefined, input.value);
+                           const input = e.target as HTMLTextAreaElement;
+                           const newTerm = mutateTerm(value.value, input.value);
                            renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value);
                            renderer.addToDataStore(uiComponent.focusNode, value.path, newTerm);
                            value.value = newTerm;
                        }}"
-               />
+               >${value.value.value ?? ''}</textarea>
 
-               ${disabled ? nothing : renderXIcon(uiComponent, classes, () => {
-                   renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value, uiComponent.children?.[index]);
-                   uiComponent.values.splice(index, 1);
-                   renderer.rerender();
-               })}
+               <!-- @ separator -->
+               <span
+                       class="${twMerge(
+                               classes.globalFieldClass,
+                               classes.globalInputFieldClass,
+                               'rounded-none pr-3 items-center align-middle content-center bg-gray-50 w-auto border-x-0 mb-0'
+                       )}"
+                       aria-hidden="true"
+               >@</span>
+
+               <!-- Language tag -->
+               <div class="relative">
+                   ${renderLangDatalist(renderer, uiComponent, value, index)}
+                   <input
+                           type="text"
+                           ?required="${(uiComponent.minCount ?? 0) > 0}"
+                           inputmode="latin"
+                           pattern="[a-zA-Z-]*"
+                           placeholder="Lang"
+                           list="${uiComponent.uuid}-${index}-langs"
+                           .value="${(value.value as Literal).language ?? ''}"
+                           ?disabled="${disabled}"
+                           class="${twMerge(
+                                   classes.globalFieldClass,
+                                   classes.globalInputFieldClass,
+                                   'w-25 rounded-l-none mb-0 h-full',
+                                   disabled ? 'cursor-not-allowed opacity-60' : ''
+                           )}"
+                           aria-label="Language tag"
+                           @change="${(e: Event) => {
+                               const input = e.target as HTMLInputElement;
+                               const newTerm = mutateTerm(value.value, undefined, input.value);
+                               renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value);
+                               renderer.addToDataStore(uiComponent.focusNode, value.path, newTerm);
+                               value.value = newTerm;
+                           }}"
+                   />
+
+                   ${disabled ? nothing : renderXIcon(uiComponent, classes, () => {
+                       renderer.removeFromDataStore(uiComponent.focusNode, value.path, value.value, uiComponent.children?.[index]);
+                       uiComponent.values.splice(index, 1);
+                       renderer.rerender();
+                   })}
+               </div>
            </div>
+           ${renderFieldError(violations, errorId, classes)}
        </div>
    `;
 }
+
