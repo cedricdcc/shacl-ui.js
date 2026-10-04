@@ -262,6 +262,10 @@ export type TailwindClasses = {
    collectionItemClass?: string;
    collectionItemLabelClass?: string;
    focusNodePickerClass?: string;
+   inputErrorClass?: string;
+   fieldErrorMessageClass?: string;
+   nestedSummaryErrorBadgeClass?: string;
+   nestedSummaryErrorRowClass?: string;
 };
 
 // ── Custom Widgets ───────────────────────────────────────────────────────────

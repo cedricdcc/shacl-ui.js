@@ -507,8 +507,8 @@ export function renderFieldError(
 
 export function renderMissingRequiredAlert(
    uiComponent: UIComponent,
-   renderer: ShaclRenderer,
-   classes: TailwindClasses,
+   _renderer: ShaclRenderer,
+   _classes: TailwindClasses,
    violations: DetailedViolation[]
 ): TemplateResult {
    const msg = violations.length > 0

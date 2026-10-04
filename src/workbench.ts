@@ -5,9 +5,8 @@ import { StreamLanguage } from '@codemirror/language';
 import { turtle } from '@codemirror/legacy-modes/mode/turtle';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { DataFactory } from 'rdf-data-factory';
-// @ts-ignore
-import { Validator } from 'shacl-engine';
 import { parseRdf } from '../lib/core/rdf.ts';
+import { type DetailedValidationReport, type DetailedViolation } from '../lib/core/validation.ts';
 import { registerVocabServerWidget } from '../lib/shacl-renderer.ts';
 import type { ShaclRenderer } from '../lib/shacl-renderer.ts';
 import '../lib/shacl-renderer.ts';
@@ -571,6 +570,8 @@ let debounceSyncTimer: ReturnType<typeof setTimeout> | null = null;
 const presetSelect = document.getElementById('preset-select') as HTMLSelectElement;
 const shapeSelect = document.getElementById('shape-select') as HTMLSelectElement;
 const btnGenerate = document.getElementById('btn-generate') as HTMLButtonElement;
+const btnValidateForm = document.getElementById('btn-validate-form') as HTMLButtonElement;
+const selectValidateOn = document.getElementById('select-validate-on') as HTMLSelectElement;
 const btnReRender = document.getElementById('btn-re-render') as HTMLButtonElement;
 const btnModeEdit = document.getElementById('btn-mode-edit') as HTMLButtonElement;
 const btnModeView = document.getElementById('btn-mode-view') as HTMLButtonElement;
@@ -743,6 +744,12 @@ async function generateForm(): Promise<void> {
   if (targetShapeIri) {
     renderer.constraintShape = targetShapeIri;
   }
+  renderer.validateOn = (selectValidateOn?.value as any) || 'manual';
+  renderer.autoExpandInvalid = true;
+
+  renderer.addEventListener('shacl-validation', ((e: CustomEvent) => {
+    updateConformanceUI(e.detail.report);
+  }) as EventListener);
 
   currentRenderer = renderer;
   rendererContainer.appendChild(renderer);
@@ -793,66 +800,138 @@ async function performOutputSync(): Promise<void> {
     outputSyncStatus.textContent = 'Synchronized';
     outputSyncStatus.classList.remove('pending');
 
-    // Run live SHACL validation
-    await runShaclValidation(turtleData);
+    // Run live SHACL validation if validateOn is change/blur or if form already has errors to update
+    if (currentRenderer.validateOn !== 'manual' || (currentRenderer.validationReport && !currentRenderer.validationReport.conforms)) {
+      await runShaclValidation();
+    }
   } catch (err) {
     console.warn('Workbench: serialization failed', err);
     outputSyncStatus.textContent = 'Sync error';
   }
 }
 
-async function runShaclValidation(dataTtl: string): Promise<void> {
-  const shapeTtl = shapeEditor.state.doc.toString();
+async function runShaclValidation(): Promise<void> {
+  if (!currentRenderer) return;
 
   try {
-    const shapesStore = await parseRdf(shapeTtl, 'text/turtle');
-    const dataStore = await parseRdf(dataTtl, 'text/turtle');
-
-    const validator = new Validator(shapesStore.asDataset(), { factory: df });
-    const report = await validator.validate({ dataset: dataStore.asDataset() });
-
-    if (report.conforms) {
-      conformanceBanner.className = 'conformance-banner valid';
-      conformanceTitle.textContent = 'SHACL Conformance: Valid';
-      conformanceSubtitle.textContent = 'Data conforms to all active shape constraints.';
-      violationsDrawer.style.display = 'none';
-      violationsList.innerHTML = '';
-    } else {
-      const results = report.results || [];
-      conformanceBanner.className = 'conformance-banner invalid';
-      conformanceTitle.textContent = `SHACL Conformance: ${results.length} Violation${results.length === 1 ? '' : 's'}`;
-      conformanceSubtitle.textContent = 'Data does not satisfy one or more property constraints:';
-      violationsDrawer.style.display = 'block';
-      violationsList.innerHTML = '';
-
-      results.forEach((r: any) => {
-        const li = document.createElement('li');
-        li.className = 'violation-item';
-
-        const pathStr = r.path?.value ? r.path.value.split(/[#/]/).pop() : '(no path)';
-        const focusStr = r.focusNode?.value ? r.focusNode.value.split(/[#/]/).pop() : '(no node)';
-        const compStr = r.sourceConstraintComponent?.value
-          ? r.sourceConstraintComponent.value.split(/[#/]/).pop()
-          : 'Constraint';
-        const msgStr = r.message?.[0]?.value || `Failed ${compStr}`;
-
-        li.innerHTML = `
-          <div class="violation-header">
-            <span class="violation-badge">${compStr}</span>
-            <span class="violation-path">${pathStr}</span>
-            <span class="violation-node">${focusStr}</span>
-          </div>
-          <div class="violation-message">${msgStr}</div>
-        `;
-        violationsList.appendChild(li);
-      });
-    }
+    const report = await currentRenderer.validate();
+    updateConformanceUI(report);
   } catch (err) {
     conformanceBanner.className = 'conformance-banner invalid';
     conformanceTitle.textContent = 'SHACL Validation Check Failed';
     conformanceSubtitle.textContent = err instanceof Error ? err.message : String(err);
     violationsDrawer.style.display = 'none';
   }
+}
+
+function updateConformanceUI(report: DetailedValidationReport): void {
+  if (report.conforms) {
+    conformanceBanner.className = 'conformance-banner valid';
+    conformanceTitle.textContent = 'SHACL Conformance: Valid';
+    conformanceSubtitle.textContent = 'Data conforms to all active shape constraints.';
+    violationsDrawer.style.display = 'none';
+    violationsList.innerHTML = '';
+  } else {
+    const violations = report.violations || [];
+    conformanceBanner.className = 'conformance-banner invalid';
+    conformanceTitle.textContent = `SHACL Conformance: ${violations.length} Violation${violations.length === 1 ? '' : 's'}`;
+    conformanceSubtitle.textContent = 'Click any violation below to jump directly to the field:';
+    violationsDrawer.style.display = 'block';
+    violationsList.innerHTML = '';
+
+    violations.forEach((v) => {
+      const li = document.createElement('li');
+      li.className = 'violation-item';
+
+      const breadcrumbStr = v.breadcrumb && v.breadcrumb.length > 0
+        ? v.breadcrumb.join(' › ')
+        : (v.pathName || v.path || 'Field');
+
+      const focusStr = v.focusNode ? v.focusNode.split(/[#/]/).pop() || v.focusNode : '(no node)';
+      const compStr = v.constraintComponent.replace('ConstraintComponent', '');
+
+      li.innerHTML = `
+        <div class="violation-header">
+          <span class="violation-breadcrumb">${breadcrumbStr}</span>
+          <span class="violation-badge">${compStr}</span>
+          <span class="violation-node">${focusStr}</span>
+        </div>
+        <div class="violation-message-row">
+          <span class="violation-message">${v.message}</span>
+          <span class="violation-jump-hint">Jump to field &rarr;</span>
+        </div>
+      `;
+
+      li.addEventListener('click', () => {
+        jumpToViolationField(v);
+      });
+
+      violationsList.appendChild(li);
+    });
+  }
+}
+
+function jumpToViolationField(violation: DetailedViolation): void {
+  if (!currentRenderer) return;
+
+  // Find the target component and expand parent accordions
+  const findAndExpand = (components: any[], targetFocusNode: string, targetPath?: string): any => {
+    for (const comp of components) {
+      if (comp.focusNode?.value === targetFocusNode && (!targetPath || comp.paths?.some((p: any) => p.path === targetPath || p.path.endsWith(targetPath)))) {
+        return comp;
+      }
+      if (comp.children && comp.children.length > 0) {
+        for (let i = 0; i < comp.children.length; i++) {
+          const subList = comp.children[i] ?? [];
+          const found = findAndExpand(subList, targetFocusNode, targetPath);
+          if (found) {
+            currentRenderer!.expandNestedItem(comp.uuid, i);
+            return found;
+          }
+        }
+      }
+    }
+    return null;
+  };
+
+  const foundComp = findAndExpand(currentRenderer.ui, violation.focusNode, violation.path);
+
+  setTimeout(() => {
+    const root = (currentRenderer!.renderRoot || currentRenderer!) as HTMLElement;
+    let targetEl: HTMLElement | null = null;
+
+    if (foundComp) {
+      // Find element matching uuid
+      targetEl = root.querySelector(`[id^="${foundComp.uuid}-"]`) ||
+                 root.querySelector(`[id="${foundComp.uuid}"]`) ||
+                 root.querySelector(`[class*="${foundComp.uuid}"]`);
+    }
+
+    if (!targetEl && violation.focusNode) {
+      // Fallback: search for any input with aria-invalid="true" or role="alert"
+      targetEl = root.querySelector('[aria-invalid="true"]') ||
+                 root.querySelector('[role="alert"]') as HTMLElement | null;
+    }
+
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const focusable = (targetEl.tagName === 'INPUT' || targetEl.tagName === 'TEXTAREA' || targetEl.tagName === 'SELECT')
+        ? targetEl
+        : (targetEl.querySelector('input, textarea, select, [tabindex]') as HTMLElement | null);
+      if (focusable && typeof focusable.focus === 'function') {
+        focusable.focus();
+      }
+
+      targetEl.classList.remove('field-highlight-pulse');
+      // trigger reflow
+      void targetEl.offsetWidth;
+      targetEl.classList.add('field-highlight-pulse');
+
+      showToast(`Jumped to: ${violation.pathName || 'field'}`);
+    } else {
+      showToast(`Field located in form for ${violation.pathName || 'property'}`);
+    }
+  }, 100);
 }
 
 // ---------------------------------------------------------------------------
@@ -915,6 +994,30 @@ function setupEventListeners(): void {
     generateForm();
     showToast('Form generated from SHACL shape');
   });
+
+  // Validate Form button
+  if (btnValidateForm) {
+    btnValidateForm.addEventListener('click', async () => {
+      if (!currentRenderer) return;
+      const report = await currentRenderer.validate();
+      updateConformanceUI(report);
+      if (report.conforms) {
+        showToast('Validation passed: Form is valid');
+      } else {
+        showToast(`Validation found ${report.violations.length} error(s)`);
+      }
+    });
+  }
+
+  // Validate On change selector
+  if (selectValidateOn) {
+    selectValidateOn.addEventListener('change', () => {
+      if (currentRenderer) {
+        currentRenderer.validateOn = selectValidateOn.value as any;
+        showToast(`Validation trigger set to: ${selectValidateOn.value}`);
+      }
+    });
+  }
 
   btnReRender.addEventListener('click', () => {
     generateForm();

@@ -64,6 +64,25 @@
             <kbd class="kbd-shortcut">Ctrl+Enter</kbd>
           </button>
 
+          <!-- Validate Form Action -->
+          <button id="btn-validate-form" class="btn btn-secondary" title="Validate Form with SHACL">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Validate Form</span>
+          </button>
+
+          <!-- Validation Trigger Mode -->
+          <div class="control-group">
+            <div class="select-wrapper">
+              <select id="select-validate-on" class="nav-select" title="Form Validation Trigger Mode">
+                <option value="manual">Validate: Manual</option>
+                <option value="change">Validate: Live</option>
+                <option value="blur">Validate: On Blur</option>
+              </select>
+            </div>
+          </div>
+
           <!-- Mode Toggle -->
           <div class="mode-toggle-group">
             <button id="btn-mode-edit" class="btn-toggle active" title="Interactive Form Editing">Edit</button>

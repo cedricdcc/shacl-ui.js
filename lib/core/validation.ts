@@ -3,7 +3,7 @@ import type { RdfStore } from 'rdf-stores';
 // @ts-ignore
 import { Validator } from 'shacl-engine';
 import { DataFactory } from 'rdf-data-factory';
-import { sh, rdf, rdfs, schema } from './namespaces.ts';
+import { sh, rdfs, schema } from './namespaces.ts';
 
 const df = new DataFactory();
 
