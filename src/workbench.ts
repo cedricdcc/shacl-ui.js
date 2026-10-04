@@ -744,7 +744,7 @@ async function generateForm(): Promise<void> {
   if (targetShapeIri) {
     renderer.constraintShape = targetShapeIri;
   }
-  renderer.validateOn = (selectValidateOn?.value as any) || 'manual';
+  renderer.validateOn = (selectValidateOn?.value as any) || 'change';
   renderer.autoExpandInvalid = true;
 
   renderer.addEventListener('shacl-validation', ((e: CustomEvent) => {
@@ -754,8 +754,13 @@ async function generateForm(): Promise<void> {
   currentRenderer = renderer;
   rendererContainer.appendChild(renderer);
 
-  // Trigger initial synchronization
-  scheduleOutputSync(300);
+  // Await renderer element lifecycle, then immediately synchronize turtle and visualize faults
+  try {
+    await renderer.updateComplete;
+  } catch (err) {
+    console.warn('Workbench: initial renderer update failed', err);
+  }
+  await performOutputSync();
 }
 
 // ---------------------------------------------------------------------------
@@ -1011,10 +1016,13 @@ function setupEventListeners(): void {
 
   // Validate On change selector
   if (selectValidateOn) {
-    selectValidateOn.addEventListener('change', () => {
+    selectValidateOn.addEventListener('change', async () => {
       if (currentRenderer) {
         currentRenderer.validateOn = selectValidateOn.value as any;
         showToast(`Validation trigger set to: ${selectValidateOn.value}`);
+        if (selectValidateOn.value !== 'manual') {
+          await runShaclValidation();
+        }
       }
     });
   }
